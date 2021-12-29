@@ -106,11 +106,11 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
         }))
       );
       drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-        color: highlightSkelet ? "#2bbb89" : "#2f0a59",
+        color: highlightSkelet ? "#2bbb89" : "#5e23a2",
         lineWidth: highlightSkelet ? 24 : 16,
       });
       drawLandmarks(canvasCtx, results.poseLandmarks, {
-        color: highlightSkelet ? "#2bbb89" : "#2f0a59",
+        color: highlightSkelet ? "#2bbb89" : "#5e23a2",
         lineWidth: 2,
       });
     };

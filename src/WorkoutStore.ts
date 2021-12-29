@@ -122,6 +122,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     onDidStart(): void {
         this.exercise = this.queue!.currentExercise
         this.state = WorkoutState.Hint
+        this.hinted.add(this.exercise!.label)
 
         if (this.exercise) {
             this.worker!.nextExercise(this.exercise.label);
