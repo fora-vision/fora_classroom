@@ -14,11 +14,11 @@ const formatTime = (time: number) => {
 }
 
 const store = new WorkoutRoom();
-const jwt = new URLSearchParams(window.location.search).get("w");
-if (jwt) void store?.initialize(jwt);
+const jwt = new URLSearchParams(window.location.search).get("w") ?? ""
+void store?.initialize(jwt);
 
 const App = observer(() => {
-  console.log(store.getExercise())
+  const [isVideo, setVideo] = useState(false)
 
   return (
     <div>
@@ -27,7 +27,7 @@ const App = observer(() => {
         onFrame={store.processFrame}
       />
       
-      {store.exercise && (
+      {!isVideo && store.exercise && (
         <S.Overlay>
           <S.ExerciseWidget>
             <S.ExerciseTitle>{store.getExercise()?.name}</S.ExerciseTitle>
@@ -40,11 +40,15 @@ const App = observer(() => {
         </S.Overlay>
       )}
 
-      {store.state === WorkoutState.Hint && (
+      {(!isVideo && store.state === WorkoutState.Hint) && (
         <S.HintOverlay>
           <S.HintImage src={store.getExercise()?.image_down.replace('.png', '')} />
           <S.HintImage src={store.getExercise()?.image_up.replace('.png', '')} />
         </S.HintOverlay>
+      )}
+
+      {!isVideo && store.exercise && (
+        <S.HintButton onClick={() => setVideo(true)}>Показать упражнение</S.HintButton>
       )}
 
       {store.state === WorkoutState.Complete && (
@@ -63,9 +67,34 @@ const App = observer(() => {
         </S.HintOverlay>
       )}
 
+      {store.state === WorkoutState.InitializeFailed && (
+        <S.HintOverlay style={{ flexDirection: 'column' }}>
+          <h1 style={{ color: '#fff' }}>Не получилось запустить тренировку</h1>
+          <p style={{ color: '#fff' }}>
+            Вероятно на данный момент все воркеры заняты, попробуйте позже
+          </p>
+        </S.HintOverlay>
+      )}
+
       {store.state === WorkoutState.Loading && (
         <S.HintOverlay>
           <h1 style={{ color: '#fff' }}>Загрузка...</h1>
+        </S.HintOverlay>
+      )}
+
+      {isVideo && (
+        <S.HintOverlay onClick={() => setVideo(false)}>
+          <video
+            controls
+            onClick={(e) => e.stopPropagation()}
+            style={{ borderRadius: 16, background: 'rgba(0, 0, 0, .2)', width: '70%' }}
+            src={store.getExercise()?.video_url}
+          />
+          <S.HintButton
+            style={{ top: 64, bottom: 'auto', right: 64 }}
+            onClick={() => setVideo(false)}>
+            Закрыть
+          </S.HintButton>
         </S.HintOverlay>
       )}
     </div>

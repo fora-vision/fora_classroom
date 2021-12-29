@@ -72,6 +72,7 @@ export const HintButton = styled.div`
     position: absolute;
     bottom: 116px;
     right: 64px;
+    cursor: pointer;
 
     color: #fff;
     padding: 16px;

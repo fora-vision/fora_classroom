@@ -5,6 +5,7 @@ import { ExerciseState, QueueExercises } from './queue';
 
 export enum WorkoutState {
     Loading,
+    InitializeFailed,
     Running,
     Hint,
     Relax,
@@ -26,8 +27,6 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     public exercises: Record<string, Exercise> = {}
     public exercise: ExerciseState | null = null
     public state: WorkoutState = WorkoutState.Loading
-    public isLoading = true
-    public inFrame = false
     public totalTime = 0
     public highlightSkelet = false
     public taskId = 0
@@ -35,8 +34,6 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     constructor() {
         makeObservable(this, {
             totalTime: observable,
-            isLoading: observable,
-            inFrame: observable,
             state: observable,
             exercise: observable,
             highlightSkelet: observable,
@@ -46,27 +43,27 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
         })
     }
 
-    async initialize(jwt: string) {   
-        this.isLoading = true
+    async initialize(jwt: string) {
+        try {
+            const { workout, session } = await this.api.loadRoom(jwt)
+            this.api.setAuthToken(session)
+            this.workout = workout
 
-        const { workout, session } = await this.api.loadRoom(jwt)
-        this.api.setAuthToken(session)
-        this.workout = workout
+            const start = await this.api.startWorker(workout.id)
+            this.exercises = await this.api.getExercises(workout.id)
+            this.queue = new QueueExercises(workout.program.sets)
+            this.queue.setPointer(start.exercises)
+            
+            this.taskId = start.taskId
+            this.worker = new WorkoutWorker(start.taskId)
+            this.worker!.delegate = this
 
-        const start = await this.api.startWorker(workout.id)
-        this.exercises = await this.api.getExercises(workout.id)
-        this.queue = new QueueExercises(workout.program.sets)
-        this.queue.setPointer(start.exercises)
-        
-        this.taskId = start.taskId
-        this.worker = new WorkoutWorker(start.taskId)
-        this.worker!.delegate = this
-
-        this._totalTimer = setInterval(() => {
-            runInAction(() => this.totalTime += 1)
-        }, 1000) as any;
-
-        runInAction(() => this.isLoading = false)
+            this._totalTimer = setInterval(() => {
+                runInAction(() => this.totalTime += 1)
+            }, 1000) as any;
+        } catch {
+            runInAction(() => this.state = WorkoutState.InitializeFailed)
+        }
     }
 
     getExercise(): Exercise | null {
