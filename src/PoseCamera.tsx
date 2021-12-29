@@ -1,6 +1,26 @@
 // @ts-nocheck
 import React, { FC, useEffect, useState } from "react";
 import { SkeletData } from "./models";
+import * as S from './styled'
+
+window.countFPS = (function () {
+  var lastLoop = (new Date()).getMilliseconds();
+  var count = 1;
+  var fps = 0;
+
+  return function () {
+    var currentLoop = (new Date()).getMilliseconds();
+    if (lastLoop > currentLoop) {
+      fps = count;
+      count = 1;
+    } else {
+      count += 1;
+    }
+    lastLoop = currentLoop;
+    return fps;
+  };
+}());
+
 
 const initializePose = () => {
   const pose = new Pose({
@@ -24,15 +44,16 @@ const initializePose = () => {
 
 interface Props {
   onFrame: (data: SkeletData) => void;
+  highlightSkelet: boolean;
 }
 
-export const PoseCamera: FC<Props> = ({ onFrame }) => {
+export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
   const [pose] = useState(() => initializePose());
 
   useEffect(() => {
     const videoElement = document.getElementsByClassName("input_video")[0];
     const canvasElement = document.getElementsByClassName("output_canvas")[0];
-    const size = { width: 1280, height: 720 }
+    const size = { width: 1280, height: 720 };
 
     const camera = new Camera(videoElement, {
       ...size,
@@ -52,7 +73,7 @@ export const PoseCamera: FC<Props> = ({ onFrame }) => {
         canvasElement.height = height;
 
         await pose.send({ image: videoElement });
-      }
+      },
     });
 
     camera.start();
@@ -63,9 +84,6 @@ export const PoseCamera: FC<Props> = ({ onFrame }) => {
     const canvasCtx = canvasElement.getContext("2d");
 
     const onResults = (results) => {
-      if (!results.poseLandmarks) return;
-      onFrame(results.poseLandmarks.map((p) => ({ x: p.x, y: p.y, z: p.z, p: p.visibility })));
-
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(
         results.image,
@@ -75,23 +93,40 @@ export const PoseCamera: FC<Props> = ({ onFrame }) => {
         canvasElement.height
       );
 
+      canvasCtx.font = "32px Montserrat";
+      canvasCtx.fillText(window.countFPS() + " FPS", 50, 100)
+
+      if (!results.poseLandmarks) return;
+      onFrame(
+        results.poseLandmarks.map((p) => ({
+          x: p.x,
+          y: p.y,
+          z: p.z,
+          p: p.visibility,
+        }))
+      );
       drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-        color: "#00FF00",
-        lineWidth: 4,
+        color: highlightSkelet ? "#2bbb89" : "#2f0a59",
+        lineWidth: highlightSkelet ? 24 : 16,
       });
       drawLandmarks(canvasCtx, results.poseLandmarks, {
-        color: "#FF0000",
+        color: highlightSkelet ? "#2bbb89" : "#2f0a59",
         lineWidth: 2,
       });
     };
 
     pose.onResults(onResults);
-  }, []);
+  }, [highlightSkelet]);
 
   return (
-    <>
+    <S.Overlay>
       <video hidden className="input_video"></video>
-      <canvas style={{ margin: 'auto', display: 'block' }} className="output_canvas" width="1280px" height="720px"></canvas>
-    </>
+      <canvas
+        style={{ margin: "auto", display: "block" }}
+        className="output_canvas"
+        width="1280px"
+        height="720px"
+      ></canvas>
+    </S.Overlay>
   );
 };

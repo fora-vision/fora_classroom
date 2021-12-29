@@ -27,7 +27,7 @@ export interface WorkoutSet {
   }[];
 }
 
-export interface WorkoutProgram {
+export interface WorkoutModel {
   id: number;
   mark: number;
   duration: number;
@@ -46,6 +46,6 @@ export interface StartWorkoutPoint {
 }
 
 export interface RoomResponse {
-  workoutId: number;
+  workout: WorkoutModel;
   session: string;
 }
