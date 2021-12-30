@@ -14,7 +14,7 @@ export interface WorkoutWorkerDelegate {
 
 export class WorkoutWorker {
   private socket: WebSocket;
-  private endpoint = "wss://forabot.fora.vision";
+  private endpoint = "wss://dev.fora.vision";
   private isStarted = false
 
   public delegate?: WorkoutWorkerDelegate;
@@ -63,7 +63,7 @@ export class WorkoutWorker {
 
 export class WorkoutApi {
   private session: string = "";
-  private endpoint = "https://forabot.fora.vision";
+  private endpoint = "https://dev.fora.vision";
 
   public setAuthToken(session: string) {
     this.session = session;

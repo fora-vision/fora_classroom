@@ -99,7 +99,7 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
       if (!results.poseLandmarks) return;
       onFrame(
         results.poseLandmarks.map((p) => ({
-          x: p.x,
+          x: p.x * -1, // flip because selfie mode
           y: p.y,
           z: p.z,
           p: p.visibility,
