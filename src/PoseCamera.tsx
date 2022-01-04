@@ -47,6 +47,25 @@ interface Props {
   highlightSkelet: boolean;
 }
 
+
+const flipLandmarks = (poseLandmarks) => {
+  const points = poseLandmarks.map((p) => ({
+    x: 1 - p.x, 
+    y: p.y,
+    z: p.z,
+    p: p.visibility,
+  }))
+  
+  for (let i = 1; i < points.length; i += 2) {
+    let a = points[i]
+    let b = points[i + 1]
+    points[i] = b
+    points[i+1] = a
+  }
+
+  return points
+}
+
 export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
   const [pose] = useState(() => initializePose());
 
@@ -95,16 +114,10 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
 
       canvasCtx.font = "32px Montserrat";
       canvasCtx.fillText(window.countFPS() + " FPS", 50, 100)
-
+        
       if (!results.poseLandmarks) return;
-      onFrame(
-        results.poseLandmarks.map((p) => ({
-          x: p.x * -1, // flip because selfie mode
-          y: p.y,
-          z: p.z,
-          p: p.visibility,
-        }))
-      );
+
+      onFrame(flipLandmarks(results.poseLandmarks));
       drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
         color: highlightSkelet ? "#2bbb89" : "#5e23a2",
         lineWidth: highlightSkelet ? 24 : 16,
