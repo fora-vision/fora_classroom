@@ -15,7 +15,7 @@ export interface ExerciseState {
 export class QueueExercises {
     private sets: number[] = []
     private exercises: ExerciseState[] = []
-    private total = 0
+    public total = 0
     public pointer = 0
 
     constructor(readonly program: WorkoutSet[]) {
@@ -30,7 +30,6 @@ export class QueueExercises {
 
     setPointer(pointer: number) {
         this.pointer = pointer
-        console.log(this.pointer)
         this.exercises.forEach((ex, i) => {
             if (i >= pointer) return;
             ex.count = 0

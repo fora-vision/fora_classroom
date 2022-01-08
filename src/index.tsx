@@ -60,7 +60,7 @@ const App = observer(() => {
 
       {store.state === WorkoutState.Error && (
         <S.HintOverlay style={{ flexDirection: 'column' }}>
-          <h1 style={{ color: '#fff' }}>Произошла ошибка!</h1>
+          <h1 style={{ color: '#fff' }}>Произошла ошибка! {store.disconnectStatus}</h1>
           <p style={{ color: '#fff' }}>
             У вас есть три минуты чтобы перезагрузить страницу и возобновить тренировку
           </p>
