@@ -17,6 +17,29 @@ export enum WorkoutState {
   Complete,
 }
 
+const errorMessages = {
+  [WorkoutDisconnectStatus.AlreadyCompleted]: {
+    title: "Тренировка уже завершена",
+    description: "Вы уже выполнили эту тренировку, можете гордиться собой!",
+  },
+
+  [WorkoutDisconnectStatus.AlreadyStarted]: {
+    title: "Тренировка уже запущена",
+    description: "Проверьте, возможно вы открыли ее в соседнем окне.",
+  },
+
+  [WorkoutDisconnectStatus.NoFreeWorkers]: {
+    title: "Нет свободных ресурсов",
+    description:
+      "На данный момент слишком много активных тренировок, попробуйте позже",
+  },
+
+  [WorkoutDisconnectStatus.Error]: {
+    title: "Проблемы с интернет соединением",
+    description: "Попробуйте перезагрузить страницу...",
+  },
+};
+
 export class WorkoutRoom implements WorkoutWorkerDelegate {
   private worker?: WorkoutWorker;
   private api = new WorkoutApi();
@@ -30,18 +53,18 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   public exercises: Record<string, Exercise> = {};
   public exercise: ExerciseState | null = null;
   public state: WorkoutState = WorkoutState.Loading;
+  public error = { title: "", description: "" };
   public highlightSkelet = false;
-  public disconnectStatus = 0;
   public totalTime = 0;
 
   constructor() {
     makeObservable(this, {
-      totalTime: observable,
       highlightSkelet: observable,
-      disconnectStatus: observable,
+      totalTime: observable,
       exercise: observable,
       progress: observable,
       state: observable,
+      error: observable,
 
       processFrame: action,
       onDidNextExercise: action,
@@ -99,29 +122,26 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     }
   }
 
-  onDidNextExercise(
-    worker: WorkoutWorker,
-    exercise: string,
-    num: number
-  ): void {
+  onDidNextExercise(wrk: WorkoutWorker, exercise: string, num: number): void {
     this.queue?.setPointer(num);
     this.progress = this.queue?.progress || 0;
   }
 
   onDidDisconnect(worker: WorkoutWorker, status: WorkoutDisconnectStatus) {
-    this.disconnectStatus = status;
     clearInterval(this._totalTimer);
 
     if (status === WorkoutDisconnectStatus.Success) {
       this.state = WorkoutState.Complete;
     } else {
       this.state = WorkoutState.Error;
+      this.error = errorMessages[status] || {
+        title: `Произошла неизвестная ошибка: ${status}`,
+        description: "Попробуйте позже, мы скоро все исправим!",
+      };
     }
   }
 
   onDidStart(): void {
-    console.log("onDidStart");
-
     this.exercise = this.queue!.currentExercise;
     this.state = WorkoutState.Hint;
     this.hinted.add(this.exercise!.label);

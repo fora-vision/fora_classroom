@@ -60,19 +60,15 @@ const App = observer(() => {
 
       {store.state === WorkoutState.Error && (
         <S.HintOverlay style={{ flexDirection: 'column' }}>
-          <h1 style={{ color: '#fff' }}>Произошла ошибка! {store.disconnectStatus}</h1>
-          <p style={{ color: '#fff' }}>
-            У вас есть три минуты чтобы перезагрузить страницу и возобновить тренировку
-          </p>
+          <h1 style={{ color: '#fff' }}>{store.error.title}</h1>
+          <p style={{ color: '#fff' }}>{store.error.description}</p>
         </S.HintOverlay>
       )}
 
       {store.state === WorkoutState.InitializeFailed && (
         <S.HintOverlay style={{ flexDirection: 'column' }}>
-          <h1 style={{ color: '#fff' }}>Не получилось запустить тренировку</h1>
-          <p style={{ color: '#fff' }}>
-            Вероятно на данный момент все воркеры заняты, попробуйте позже
-          </p>
+          <h1 style={{ color: '#fff' }}>Не получилось запустить тренировку!</h1>
+          <p style={{ color: '#fff' }}>Такой тренировки не существует или отсутствует соединение с сервером</p>
         </S.HintOverlay>
       )}
 
