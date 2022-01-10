@@ -17,6 +17,11 @@ export enum WorkoutState {
   Complete,
 }
 
+const initializeError = {
+  title: "Не получилось запустить тренировку!",
+  description: "Такой тренировки не существует или отсутствует соединение с сервером"
+}
+
 const errorMessages = {
   [WorkoutDisconnectStatus.AlreadyCompleted]: {
     title: "Тренировка уже завершена",
@@ -37,7 +42,7 @@ const errorMessages = {
   [WorkoutDisconnectStatus.Error]: {
     title: "Проблемы с интернет соединением",
     description: "Попробуйте перезагрузить страницу...",
-  },
+  }
 };
 
 export class WorkoutRoom implements WorkoutWorkerDelegate {
@@ -81,7 +86,6 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
 
       this.exercises = await this.api.getExercises(workout.id);
       this.queue = new QueueExercises(workout.program.sets);
-      this.queue.setPointer(0);
 
       this.worker = new WorkoutWorker(workout.id);
       this.worker!.delegate = this;
@@ -90,7 +94,10 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
         runInAction(() => (this.totalTime += 1));
       }, 1000) as any;
     } catch {
-      runInAction(() => (this.state = WorkoutState.InitializeFailed));
+      runInAction(() => {
+        this.state = WorkoutState.Error
+        this.error = initializeError
+      })
     }
   }
 
@@ -124,6 +131,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
 
   onDidNextExercise(wrk: WorkoutWorker, exercise: string, num: number): void {
     this.queue?.setPointer(num);
+    this.exercise = this.queue?.currentExercise || null;
     this.progress = this.queue?.progress || 0;
   }
 

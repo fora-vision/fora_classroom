@@ -2,10 +2,9 @@ import { SkeletData, RoomResponse, Exercise } from "./models";
 
 export enum WorkoutDisconnectStatus {
   Success = 1000,
-  AlreadyCompleted = 1002,
-  AlreadyStarted = 1003,
-  NoFreeWorkers = 1005,
-  AnyError = 1006,
+  AlreadyCompleted = 3002,
+  AlreadyStarted = 3003,
+  NoFreeWorkers = 3005,
   Error = 0,
 }
 
@@ -63,9 +62,12 @@ export class WorkoutWorker {
     };
   }
 
-  sendFrame(skelet: SkeletData) {
+  sendFrame(points: SkeletData) {
     if (!this.isStarted) return;
-    this.socket.send(JSON.stringify(skelet));
+    this.socket.send(JSON.stringify({
+      type: "FRAME",
+      data: points
+    }));
   }
 }
 

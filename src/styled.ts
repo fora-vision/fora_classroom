@@ -1,30 +1,35 @@
 import styled from 'styled-components'
 
+export const Page = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+  
+    padding: 32px 64px 64px;
+`
+
+export const Screen = styled.div`
+    position: relative;
+    margin-bottom: 24px;
+    flex: 1;
+`
+
 export const Overlay = styled.div`
     top: 0;
     left: 0;
     position: absolute;
     width: 100vw;
     height: 100vh;
-
+    background: rgba(0, 0, 0, 0.7);
+  
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-end;
-`
-
-export const ExerciseWidget = styled.div`
-    position: absolute;
-    left: 64px;
-    bottom: 116px;
-    
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(60px);
-    padding: 40px 24px;
-    display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
-    border-radius: 16px;
-` 
+`
 
 export const ExerciseTitle = styled.h1`
     text-transform: capitalize;
@@ -32,11 +37,17 @@ export const ExerciseTitle = styled.h1`
     font-weight: 600;
     font-size: 30px;
     line-height: 37px;
-    display: flex;
-    align-items: flex-end;
     color: #FFFFFF;
+
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(60px);
+    padding: 16px;
+    border-radius: 16px;
+    
     margin: 0;
-    margin-right: 24px;
+    position: absolute;
+    top: 0;
+    left: 0;
 `
 
 export const ExerciseCount = styled.h2`
@@ -44,36 +55,53 @@ export const ExerciseCount = styled.h2`
     font-weight: 500;
     font-size: 116px;
     line-height: 141px;
-    display: flex;
-    align-items: flex-end;
-    text-align: center;
-    color: #FFFFFF;
+
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(60px);
+    padding: 16px;
+    border-radius: 16px;
+    color: #fff;
+
+    position: absolute;
+    left: 0;
+    bottom: 0;
     margin: 0;
 `
 
-export const HintOverlay = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+export const HelpSide = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-content: flex-end;
 `
 
-export const HintImage = styled.img`
-    width: 30%;
-    margin: 0 5%;
+export const ExerciseHint = styled.div`
+    background: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+
+    backdrop-filter: blur(5px);
+    box-sizing: border-box;
+    padding: 16px;
+
+    flex: 1;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    width: 350px;
+
+    img {
+        width: 100%;
+    }
 `
 
 export const HintButton = styled.div`
-    position: absolute;
-    bottom: 116px;
-    right: 64px;
     cursor: pointer;
-
     color: #fff;
     padding: 16px;
     background: rgba(2, 2, 9, 0.55);
@@ -84,10 +112,7 @@ export const HintButton = styled.div`
 `
 
 export const Timeline = styled.div`
-    position: absolute;
-    bottom: 64px;
-    left: 64px;
-    right: 64px;
+    width: 100%;
     height: 28px;
 
     background: rgba(255, 255, 255, 0.55);

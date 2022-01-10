@@ -1,26 +1,7 @@
 // @ts-nocheck
 import React, { FC, useEffect, useState } from "react";
 import { SkeletData } from "./models";
-import * as S from './styled'
-
-window.countFPS = (function () {
-  var lastLoop = (new Date()).getMilliseconds();
-  var count = 1;
-  var fps = 0;
-
-  return function () {
-    var currentLoop = (new Date()).getMilliseconds();
-    if (lastLoop > currentLoop) {
-      fps = count;
-      count = 1;
-    } else {
-      count += 1;
-    }
-    lastLoop = currentLoop;
-    return fps;
-  };
-}());
-
+import * as S from "./styled";
 
 const initializePose = () => {
   const pose = new Pose({
@@ -47,26 +28,25 @@ interface Props {
   highlightSkelet: boolean;
 }
 
-
 const flipLandmarks = (poseLandmarks) => {
   const points = poseLandmarks.map((p) => ({
-    x: 1 - p.x, 
+    x: 1 - p.x,
     y: p.y,
     z: p.z,
     p: p.visibility,
-  }))
-  
+  }));
+
   for (let i = 1; i < points.length; i += 2) {
-    let a = points[i]
-    let b = points[i + 1]
-    points[i] = b
-    points[i+1] = a
+    let a = points[i];
+    let b = points[i + 1];
+    points[i] = b;
+    points[i + 1] = a;
   }
 
-  return points
-}
+  return points;
+};
 
-export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
+export const PoseCamera: FC<Props> = ({ onFrame, onInfo, highlightSkelet }) => {
   const [pose] = useState(() => initializePose());
 
   useEffect(() => {
@@ -74,27 +54,29 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
     const canvasElement = document.getElementsByClassName("output_canvas")[0];
     const size = { width: 1280, height: 720 };
 
+    const resizeCanvas = () => {
+      const aspect = size.height / size.width;
+      let width: number, height: number;
+
+      if (window.innerWidth > window.innerHeight) {
+        height = window.innerHeight;
+        width = height / aspect;
+      } else {
+        width = window.innerWidth;
+        height = width * aspect;
+      }
+
+      canvasElement.width = width;
+      canvasElement.height = height;
+    };
+
     const camera = new Camera(videoElement, {
       ...size,
       onFrame: async () => {
-        const aspect = size.height / size.width;
-        let width: number, height: number;
-
-        if (window.innerWidth > window.innerHeight) {
-          height = window.innerHeight;
-          width = height / aspect;
-        } else {
-          width = window.innerWidth;
-          height = width * aspect;
-        }
-
-        canvasElement.width = width;
-        canvasElement.height = height;
-
+        resizeCanvas();
         await pose.send({ image: videoElement });
       },
     });
-
     camera.start();
   }, []);
 
@@ -102,7 +84,18 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
     const canvasElement = document.getElementsByClassName("output_canvas")[0];
     const canvasCtx = canvasElement.getContext("2d");
 
+    let lastUpdate = window.performance.now();
+    const fps = 1000 / 13; // Send max 12 fps
+
     const onResults = (results) => {
+      const current = window.performance.now();
+      if (current - lastUpdate >= fps) {
+        lastUpdate = window.performance.now();
+        if (results.poseLandmarks) {
+          onFrame(flipLandmarks(results.poseLandmarks));
+        }
+      }
+
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(
         results.image,
@@ -112,20 +105,16 @@ export const PoseCamera: FC<Props> = ({ onFrame, highlightSkelet }) => {
         canvasElement.height
       );
 
-      canvasCtx.font = "32px Montserrat";
-      canvasCtx.fillText(window.countFPS() + " FPS", 50, 100)
-        
-      if (!results.poseLandmarks) return;
-
-      onFrame(flipLandmarks(results.poseLandmarks));
-      drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-        color: highlightSkelet ? "#2bbb89" : "#5e23a2",
-        lineWidth: highlightSkelet ? 24 : 16,
-      });
-      drawLandmarks(canvasCtx, results.poseLandmarks, {
-        color: highlightSkelet ? "#2bbb89" : "#5e23a2",
-        lineWidth: 2,
-      });
+      if (results.poseLandmarks) {
+        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+          color: highlightSkelet ? "#2bbb89" : "#5e23a2",
+          lineWidth: highlightSkelet ? 24 : 16,
+        });
+        drawLandmarks(canvasCtx, results.poseLandmarks, {
+          color: highlightSkelet ? "#2bbb89" : "#5e23a2",
+          lineWidth: 2,
+        });
+      }
     };
 
     pose.onResults(onResults);
