@@ -21,9 +21,11 @@ export class QueueExercises {
     constructor(readonly program: WorkoutSet[]) {
         // for simplicity, we generate a flat queue
         for (let set = 0; set < program.length; set++) {
-            for (let ex of program[set].exercises) {
-                this.total += ex.count
-                this.exercises.push({ ...ex, set: set })
+            for (let repeat = 0; repeat < program[set].repeats; repeat++) {
+                for (let ex of program[set].exercises) {
+                    this.total += ex.count
+                    this.exercises.push({ ...ex, set: set })
+                }
             }
         }
     }

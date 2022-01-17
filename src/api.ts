@@ -8,6 +8,19 @@ export enum WorkoutDisconnectStatus {
   Error = 0,
 }
 
+export const watchConfirmRequest = (invite: string) => new Promise<string>((resolve, reject) => {
+  const socket = new WebSocket(`wss://dev.fora.vision/api/v2/workout/room/${invite}`);
+  socket.onerror = () => reject()
+  socket.onclose = () => reject()
+  socket.onmessage = (event) => {
+    const action = JSON.parse(event.data);
+    if (action.w) {
+      resolve(action.w);
+      socket.close();
+    }
+  }
+})
+
 export interface WorkoutWorkerDelegate {
   onDidStart(worker: WorkoutWorker): void;
   onDidDisconnect(worker: WorkoutWorker, status: WorkoutDisconnectStatus): void;
@@ -60,6 +73,11 @@ export class WorkoutWorker {
         );
       }
     };
+  }
+
+  replaceExercise() {
+    if (!this.isStarted) return;
+    this.socket.send(JSON.stringify({ type: "REPLACE_EXERCISE" }));
   }
 
   sendFrame(points: SkeletData) {

@@ -35,10 +35,11 @@ export const ExerciseTitle = styled.h1`
     text-transform: capitalize;
     font-style: normal;
     font-weight: 600;
-    font-size: 30px;
+    font-size: 42px;
     line-height: 37px;
     color: #FFFFFF;
 
+    max-width: calc(100% - 400px);
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(60px);
     padding: 16px;

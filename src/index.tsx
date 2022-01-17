@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+import QRCode from "react-qr-code";
+
 import { WorkoutRoom, WorkoutState } from "./WorkoutStore";
 import { PoseCamera } from "./PoseCamera";
 import { observer } from "mobx-react-lite";
 import * as S from "./styled";
-import { Overlay } from "./styled";
 
 const formatTime = (time: number) => {
   const mm = Math.floor(time / 60);
@@ -16,7 +17,8 @@ const formatTime = (time: number) => {
 
 const store = new WorkoutRoom();
 const jwt = new URLSearchParams(window.location.search).get("w") ?? "";
-void store?.initialize(jwt);
+if (jwt === "") store?.generateInvite();
+else void store?.initialize(jwt);
 
 const ExerciseHint = ({ frames, per }) => {
   const [frame, setFrame] = useState(0);
@@ -35,7 +37,6 @@ const ExerciseHint = ({ frames, per }) => {
 
 const App = observer(() => {
   const [isVideo, setVideo] = useState(false);
-
   return (
     <div>
       <PoseCamera
@@ -73,6 +74,19 @@ const App = observer(() => {
             <S.TimelineTotal>{formatTime(store.totalTime)}</S.TimelineTotal>
           </S.Timeline>
         </S.Page>
+      )}
+
+      {store.state === WorkoutState.Invite && (
+        <S.Overlay>
+          <div style={{ width: 400, marginRight: 64 }}>
+            <h1 style={{ color: "#fff" }}>Добро пожаловать!</h1>
+            <p style={{ color: "#fff" }}>
+              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в браузере
+            </p>
+          </div>
+
+          <QRCode  value={store.inviteCode} />
+        </S.Overlay>
       )}
 
       {store.state === WorkoutState.Complete && (

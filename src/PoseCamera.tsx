@@ -106,11 +106,18 @@ export const PoseCamera: FC<Props> = ({ onFrame, onInfo, highlightSkelet }) => {
       );
 
       if (results.poseLandmarks) {
-        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+        const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }))
+        const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }))
+
+        drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {
           color: highlightSkelet ? "#2bbb89" : "#5e23a2",
           lineWidth: highlightSkelet ? 24 : 16,
         });
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
+        drawConnectors(canvasCtx, landmarksRight, POSE_CONNECTIONS, {
+          color: highlightSkelet ? "#2bbb89" : "#d52152",
+          lineWidth: highlightSkelet ? 24 : 16,
+        });
+        drawLandmarks(canvasCtx, landmarks, {
           color: highlightSkelet ? "#2bbb89" : "#5e23a2",
           lineWidth: 2,
         });

@@ -3,12 +3,13 @@ import {
   WorkoutWorker,
   WorkoutApi,
   WorkoutWorkerDelegate,
-  WorkoutDisconnectStatus,
+  WorkoutDisconnectStatus, watchConfirmRequest,
 } from "./api";
 import { Exercise, SkeletData, WorkoutModel } from "./models";
 import { ExerciseState, QueueExercises } from "./queue";
 
 export enum WorkoutState {
+  Invite,
   Loading,
   InitializeFailed,
   Running,
@@ -50,6 +51,8 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   private api = new WorkoutApi();
   private _totalTimer?: number;
 
+  public inviteCode: string = ""
+
   public workout?: WorkoutModel;
   public queue?: QueueExercises;
   public hinted = new Set<string>();
@@ -70,12 +73,28 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       progress: observable,
       state: observable,
       error: observable,
+      inviteCode: observable,
 
+      generateInvite: action,
       processFrame: action,
       onDidNextExercise: action,
       onDidDisconnect: action,
       onDidStart: action,
     });
+  }
+
+  async generateInvite() {
+    try {
+      this.state = WorkoutState.Invite;
+      this.inviteCode = "FORA" + Math.random().toString(36).substr(2, 9);
+      const session = await watchConfirmRequest(this.inviteCode)
+      const newURL = new URL(window.location.href);
+      newURL.search = '?w=' + session;
+      window.history.pushState({ path: newURL.href }, 'FORA.VISION', newURL.href);
+      await this.initialize(session);
+    } catch {
+      setTimeout(() => this.generateInvite(), 5000)
+    }
   }
 
   async initialize(jwt: string) {
@@ -86,7 +105,6 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
 
       this.exercises = await this.api.getExercises(workout.id);
       this.queue = new QueueExercises(workout.program.sets);
-
       this.worker = new WorkoutWorker(workout.id);
       this.worker!.delegate = this;
 
