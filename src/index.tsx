@@ -40,6 +40,7 @@ const App = observer(() => {
   return (
     <div>
       <PoseCamera
+        style={{ opacity: store.state === WorkoutState.Invite ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
         onFrame={store.processFrame}
       />

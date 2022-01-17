@@ -25,6 +25,7 @@ export const Overlay = styled.div`
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.7);
+    transition: .5s opacity;
   
     display: flex;
     justify-content: center;

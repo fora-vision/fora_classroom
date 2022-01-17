@@ -26,6 +26,7 @@ const initializePose = () => {
 interface Props {
   onFrame: (data: SkeletData) => void;
   highlightSkelet: boolean;
+  style: any;
 }
 
 const flipLandmarks = (poseLandmarks) => {
@@ -46,7 +47,7 @@ const flipLandmarks = (poseLandmarks) => {
   return points;
 };
 
-export const PoseCamera: FC<Props> = ({ onFrame, onInfo, highlightSkelet }) => {
+export const PoseCamera: FC<Props> = ({ onFrame, style, highlightSkelet }) => {
   const [pose] = useState(() => initializePose());
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export const PoseCamera: FC<Props> = ({ onFrame, onInfo, highlightSkelet }) => {
   }, [highlightSkelet]);
 
   return (
-    <S.Overlay>
+    <S.Overlay style={style}>
       <video hidden className="input_video"></video>
       <canvas
         style={{ margin: "auto", display: "block" }}
