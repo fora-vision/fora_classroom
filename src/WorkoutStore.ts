@@ -189,5 +189,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     }
   }
 
-  onDidStart(): void {}
+  onDidStart(): void {
+    this.showReplaceButtonWithDelay();
+  }
 }

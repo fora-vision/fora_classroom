@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import QRCode from "react-qr-code";
 
+// @ts-ignore
+import logoSrc from "./assets/logo.png";
 import { WorkoutRoom, WorkoutState } from "./WorkoutStore";
 import { PoseCamera } from "./PoseCamera";
 import { observer } from "mobx-react-lite";
 import * as S from "./styled";
+import { isAndroid, mobileCheck } from "./helpers";
+import { MobileAccess } from "./styled";
 
 const formatTime = (time: number) => {
   const mm = Math.floor(time / 60);
@@ -17,8 +21,9 @@ const formatTime = (time: number) => {
 
 const store = new WorkoutRoom();
 const jwt = new URLSearchParams(window.location.search).get("w") ?? "";
-if (jwt === "") store?.generateInvite();
-else void store?.initialize(jwt);
+if (jwt === "") {
+  store?.generateInvite();
+}
 
 const ExerciseHint = ({ frames, per }) => {
   const [frame, setFrame] = useState(0);
@@ -39,15 +44,32 @@ const App = observer(() => {
   const [isVideo, setVideo] = useState(false);
   const [isLoaded, setLoaded] = useState(false);
   const [fps, setFps] = useState(0);
+
   const hideCamera = !store.exercise || !isLoaded || store.state === WorkoutState.Invite;
+  const handleLoaded = () => {
+    void store?.initialize(jwt);
+    setLoaded(true);
+  };
+
+  if (mobileCheck()) {
+    return (
+      <S.MobileAccess>
+        <img src={logoSrc} />
+        <h1>Fora.Vision</h1>
+        <br />
+        <p>Fora.Vision доступен для пользователей IOS! Установите приложение через TestFlight</p>
+        <a href="https://testflight.apple.com/join/U6JbWxG5">Скачать приложение</a>
+      </S.MobileAccess>
+    );
+  }
 
   return (
     <div>
       <PoseCamera
         style={{ opacity: hideCamera ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
-        onLoaded={() => setLoaded(true)}
         onFrame={store.processFrame}
+        onLoaded={handleLoaded}
         onFps={setFps}
       />
 
@@ -117,11 +139,12 @@ const App = observer(() => {
         </S.Overlay>
       )}
 
-      {!isLoaded || store.state === WorkoutState.Loading && (
-        <S.Overlay>
-          <h1 style={{ color: "#fff" }}>Загрузка...</h1>
-        </S.Overlay>
-      )}
+      {!isLoaded ||
+        (store.state === WorkoutState.Loading && (
+          <S.Overlay>
+            <h1 style={{ color: "#fff" }}>Загрузка...</h1>
+          </S.Overlay>
+        ))}
 
       {isVideo && (
         <S.Overlay onClick={() => setVideo(false)}>
