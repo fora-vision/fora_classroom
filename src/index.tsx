@@ -37,19 +37,28 @@ const ExerciseHint = ({ frames, per }) => {
 
 const App = observer(() => {
   const [isVideo, setVideo] = useState(false);
+  const [isLoaded, setLoaded] = useState(false);
+  const [fps, setFps] = useState(0);
+  const hideCamera = !store.exercise || !isLoaded || store.state === WorkoutState.Invite;
+
   return (
     <div>
       <PoseCamera
-        style={{ opacity: store.state === WorkoutState.Invite ? 0 : 1 }}
+        style={{ opacity: hideCamera ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
+        onLoaded={() => setLoaded(true)}
         onFrame={store.processFrame}
+        onFps={setFps}
       />
 
-      {!isVideo && store.exercise && (
+      {!isVideo && isLoaded && store.exercise && (
         <S.Page>
           <S.Screen>
-            <S.ExerciseTitle>{store.getExercise()?.name}</S.ExerciseTitle>
-            <S.ExerciseCount>{store.exercise?.count}</S.ExerciseCount>
+            <S.TopAngle>
+              <S.ExerciseTitle>{store.getExercise()?.name}</S.ExerciseTitle>
+              <S.Badge>{fps} FPS</S.Badge>
+            </S.TopAngle>
+            <S.ExerciseCount>{store.exerciseCount}</S.ExerciseCount>
 
             <S.HelpSide>
               {store.state === WorkoutState.Hint && (
@@ -63,10 +72,13 @@ const App = observer(() => {
               )}
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <S.HintButton onClick={() => setVideo(true)}>
-                  Показать упражнение
-                </S.HintButton>
-                <S.HintButton style={{ marginLeft: 16 }}>Помощь</S.HintButton>
+                {store.showReplaceButton && (
+                  <S.HintButton onClick={() => store.replaceExercise()} style={{ marginRight: 16 }}>
+                    Заменить упражнение
+                  </S.HintButton>
+                )}
+
+                <S.HintButton onClick={() => setVideo(true)}>Показать упражнение</S.HintButton>
               </div>
             </S.HelpSide>
           </S.Screen>
@@ -82,20 +94,19 @@ const App = observer(() => {
           <div style={{ width: 400, marginRight: 64 }}>
             <h1 style={{ color: "#fff" }}>Добро пожаловать!</h1>
             <p style={{ color: "#fff" }}>
-              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в браузере
+              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в
+              браузере
             </p>
           </div>
 
-          <QRCode  value={store.inviteCode} />
+          <QRCode value={store.inviteCode} />
         </S.Overlay>
       )}
 
       {store.state === WorkoutState.Complete && (
         <S.Overlay style={{ flexDirection: "column" }}>
           <h1 style={{ color: "#fff" }}>Тренировка завершена!</h1>
-          <p style={{ color: "#fff" }}>
-            Можете закрыть страницу, ваш результат сохранен
-          </p>
+          <p style={{ color: "#fff" }}>Можете закрыть страницу, ваш результат сохранен</p>
         </S.Overlay>
       )}
 
@@ -106,7 +117,7 @@ const App = observer(() => {
         </S.Overlay>
       )}
 
-      {store.state === WorkoutState.Loading && (
+      {!isLoaded || store.state === WorkoutState.Loading && (
         <S.Overlay>
           <h1 style={{ color: "#fff" }}>Загрузка...</h1>
         </S.Overlay>

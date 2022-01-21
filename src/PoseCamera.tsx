@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { FC, useEffect, useState } from "react";
 import { SkeletData } from "./models";
+import { countFPS } from './helpers';
 import * as S from "./styled";
 
 const initializePose = () => {
@@ -24,6 +25,8 @@ const initializePose = () => {
 };
 
 interface Props {
+  onFps: (fsp: number) => void;
+  onLoaded: () => void;
   onFrame: (data: SkeletData) => void;
   highlightSkelet: boolean;
   style: any;
@@ -47,13 +50,14 @@ const flipLandmarks = (poseLandmarks) => {
   return points;
 };
 
-export const PoseCamera: FC<Props> = ({ onFrame, style, highlightSkelet }) => {
+export const PoseCamera: FC<Props> = ({ onFrame, onFps, onLoaded, style, highlightSkelet }) => {
   const [pose] = useState(() => initializePose());
 
   useEffect(() => {
     const videoElement = document.getElementsByClassName("input_video")[0];
     const canvasElement = document.getElementsByClassName("output_canvas")[0];
     const size = { width: 1280, height: 720 };
+    let isLoaded = false
 
     const resizeCanvas = () => {
       const aspect = size.height / size.width;
@@ -76,6 +80,10 @@ export const PoseCamera: FC<Props> = ({ onFrame, style, highlightSkelet }) => {
       onFrame: async () => {
         resizeCanvas();
         await pose.send({ image: videoElement });
+        if (isLoaded == false) {
+          isLoaded = true;
+          onLoaded();
+        }
       },
     });
     camera.start();
@@ -97,6 +105,7 @@ export const PoseCamera: FC<Props> = ({ onFrame, style, highlightSkelet }) => {
         }
       }
 
+      onFps(countFPS())
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(
         results.image,
@@ -109,6 +118,10 @@ export const PoseCamera: FC<Props> = ({ onFrame, style, highlightSkelet }) => {
       if (results.poseLandmarks) {
         const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }))
         const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }))
+        for (let i = 0; i < 11; i++) {
+          landmarksRight[i].visibility = 0
+          landmarks[i].visibility = 0
+        }
 
         drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {
           color: highlightSkelet ? "#2bbb89" : "#5e23a2",

@@ -32,24 +32,31 @@ export const Overlay = styled.div`
     align-items: center;
 `
 
-export const ExerciseTitle = styled.h1`
-    text-transform: capitalize;
-    font-style: normal;
-    font-weight: 600;
-    font-size: 42px;
-    line-height: 37px;
-    color: #FFFFFF;
+export const TopAngle = styled.div`
+  max-width: calc(100% - 400px);
+  position: absolute;
+  top: 0;
+  left: 0;
+`
 
-    max-width: calc(100% - 400px);
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(60px);
-    padding: 16px;
-    border-radius: 16px;
+export const Badge = styled.div`
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(60px);
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 8px;
     
-    margin: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
+      text-transform: capitalize;
+      font-style: normal;
+      font-weight: 600;
+      font-size: 16px;
+      color: #FFFFFF;
+    width: fit-content;
+`
+
+export const ExerciseTitle = styled(Badge)`
+    font-size: 42px;
+  width: 100%;
 `
 
 export const ExerciseCount = styled.h2`
@@ -95,6 +102,7 @@ export const ExerciseHint = styled.div`
     flex: 1;
     border-radius: 16px;
     margin-bottom: 16px;
+    margin-left: auto;
     width: 350px;
 
     img {

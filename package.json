@@ -13,7 +13,8 @@
     "@parcel/transformer-image": "^2.0.0-rc.0",
     "@parcel/transformer-webmanifest": "^2.0.0-rc.0",
     "@types/react": "^17.0.38",
-    "parcel": "^2.0.0-rc.0"
+    "parcel": "^2.0.0-rc.0",
+    "prettier": "^2.5.1"
   },
   "dependencies": {
     "mobx": "^6.3.10",

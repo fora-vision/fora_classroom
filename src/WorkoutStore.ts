@@ -1,12 +1,6 @@
-import { action, makeObservable, observable, runInAction } from "mobx";
-import {
-  WorkoutWorker,
-  WorkoutApi,
-  WorkoutWorkerDelegate,
-  WorkoutDisconnectStatus, watchConfirmRequest,
-} from "./api";
+import { action, computed, makeObservable, observable, runInAction } from "mobx";
+import { WorkoutWorker, WorkoutApi, WorkoutWorkerDelegate, WorkoutDisconnectStatus, watchConfirmRequest } from "./api";
 import { Exercise, SkeletData, WorkoutModel } from "./models";
-import { ExerciseState, QueueExercises } from "./queue";
 
 export enum WorkoutState {
   Invite,
@@ -20,8 +14,8 @@ export enum WorkoutState {
 
 const initializeError = {
   title: "Не получилось запустить тренировку!",
-  description: "Такой тренировки не существует или отсутствует соединение с сервером"
-}
+  description: "Такой тренировки не существует или отсутствует соединение с сервером",
+};
 
 const errorMessages = {
   [WorkoutDisconnectStatus.AlreadyCompleted]: {
@@ -36,14 +30,13 @@ const errorMessages = {
 
   [WorkoutDisconnectStatus.NoFreeWorkers]: {
     title: "Нет свободных ресурсов",
-    description:
-      "На данный момент слишком много активных тренировок, попробуйте позже",
+    description: "На данный момент слишком много активных тренировок, попробуйте позже",
   },
 
   [WorkoutDisconnectStatus.Error]: {
     title: "Проблемы с интернет соединением",
     description: "Попробуйте перезагрузить страницу...",
-  }
+  },
 };
 
 export class WorkoutRoom implements WorkoutWorkerDelegate {
@@ -51,15 +44,16 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   private api = new WorkoutApi();
   private _totalTimer?: number;
 
-  public inviteCode: string = ""
-
   public workout?: WorkoutModel;
-  public queue?: QueueExercises;
-  public hinted = new Set<string>();
-  public progress = 0;
+  public showReplaceButton = false;
+  public inviteCode = "";
+
+  public exercise = "";
+  public progressCount = 0;
+  public exerciseCount = 0;
+  public pipeline: number[] = [];
 
   public exercises: Record<string, Exercise> = {};
-  public exercise: ExerciseState | null = null;
   public state: WorkoutState = WorkoutState.Loading;
   public error = { title: "", description: "" };
   public highlightSkelet = false;
@@ -70,13 +64,20 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       highlightSkelet: observable,
       totalTime: observable,
       exercise: observable,
-      progress: observable,
       state: observable,
       error: observable,
-      inviteCode: observable,
 
-      generateInvite: action,
+      inviteCode: observable,
+      showReplaceButton: observable,
+      exerciseCount: observable,
+      progressCount: observable,
+      pipeline: observable,
+
+      progress: computed,
+
       processFrame: action,
+      generateInvite: action,
+      onDidReplaceExercise: action,
       onDidNextExercise: action,
       onDidDisconnect: action,
       onDidStart: action,
@@ -87,13 +88,13 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     try {
       this.state = WorkoutState.Invite;
       this.inviteCode = "FORA" + Math.random().toString(36).substr(2, 9);
-      const session = await watchConfirmRequest(this.inviteCode)
+      const session = await watchConfirmRequest(this.inviteCode);
       const newURL = new URL(window.location.href);
-      newURL.search = '?w=' + session;
-      window.history.pushState({ path: newURL.href }, 'FORA.VISION', newURL.href);
+      newURL.search = "?w=" + session;
+      window.history.pushState({ path: newURL.href }, "FORA.VISION", newURL.href);
       await this.initialize(session);
     } catch {
-      setTimeout(() => this.generateInvite(), 5000)
+      setTimeout(() => this.generateInvite(), 5000);
     }
   }
 
@@ -104,24 +105,33 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       this.workout = workout;
 
       this.exercises = await this.api.getExercises(workout.id);
-      this.queue = new QueueExercises(workout.program.sets);
       this.worker = new WorkoutWorker(workout.id);
       this.worker!.delegate = this;
+
+      for (let set of workout.program.sets) {
+        for (let repeat = 0; repeat < set.repeats; repeat++) {
+          this.pipeline.push(...set.exercises.map((ex) => ex.count));
+        }
+      }
 
       this._totalTimer = setInterval(() => {
         runInAction(() => (this.totalTime += 1));
       }, 1000) as any;
     } catch {
       runInAction(() => {
-        this.state = WorkoutState.Error
-        this.error = initializeError
-      })
+        this.state = WorkoutState.Error;
+        this.error = initializeError;
+      });
     }
   }
 
+  get progress() {
+    const total = this.pipeline.reduce((a, b) => a + b, 0);
+    return this.progressCount / total;
+  }
+
   getExercise(): Exercise | null {
-    const id = this.exercise?.label;
-    if (id) return this.exercises[id] ?? null;
+    if (this.exercise) return this.exercises[this.exercise] ?? null;
     return null;
   }
 
@@ -130,27 +140,39 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   };
 
   async onDidCompleteExercise() {
-    if (!this.queue) return;
-    const exercise = this.queue.completeOne();
-
-    this.exercise = exercise;
     this.highlightSkelet = true;
-    this.progress = this.queue?.progress || 0;
-    this.state = WorkoutState.Running;
+    this.exerciseCount -= 1;
+    this.progressCount += 1;
     setTimeout(() => {
       runInAction(() => (this.highlightSkelet = false));
     }, 1000);
-
-    if (exercise && !this.hinted.has(exercise.label)) {
-      this.state = WorkoutState.Hint;
-      this.hinted.add(exercise.label);
-    }
   }
 
-  onDidNextExercise(wrk: WorkoutWorker, exercise: string, num: number): void {
-    this.queue?.setPointer(num);
-    this.exercise = this.queue?.currentExercise || null;
-    this.progress = this.queue?.progress || 0;
+  showReplaceButtonWithDelay() {
+    setTimeout(() => {
+      runInAction(() => {
+        this.showReplaceButton = true;
+      });
+    }, 20000);
+  }
+
+  replaceExercise() {
+    if (!this.showReplaceButton) return;
+    this.worker?.replaceExercise();
+    this.showReplaceButton = false;
+    this.showReplaceButtonWithDelay();
+  }
+
+  onDidReplaceExercise(wrk: WorkoutWorker, exercise: string, count: number, position: number): void {
+    this.onDidNextExercise(wrk, exercise, count, position);
+  }
+
+  onDidNextExercise(wrk: WorkoutWorker, exercise: string, count: number, position: number): void {
+    this.pipeline[position] = count;
+    this.progressCount = this.pipeline.slice(0, position).reduce((a, b) => a + b, 0);
+    this.state = WorkoutState.Hint;
+    this.exerciseCount = count;
+    this.exercise = exercise;
   }
 
   onDidDisconnect(worker: WorkoutWorker, status: WorkoutDisconnectStatus) {
@@ -167,9 +189,5 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     }
   }
 
-  onDidStart(): void {
-    this.exercise = this.queue!.currentExercise;
-    this.state = WorkoutState.Hint;
-    this.hinted.add(this.exercise!.label);
-  }
+  onDidStart(): void {}
 }
