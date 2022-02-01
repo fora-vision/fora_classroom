@@ -7,9 +7,8 @@ import logoSrc from "./assets/logo.png";
 import { WorkoutRoom, WorkoutState } from "./WorkoutStore";
 import { PoseCamera } from "./PoseCamera";
 import { observer } from "mobx-react-lite";
+import { mobileCheck } from "./helpers";
 import * as S from "./styled";
-import { isAndroid, mobileCheck } from "./helpers";
-import { MobileAccess } from "./styled";
 
 const formatTime = (time: number) => {
   const mm = Math.floor(time / 60);
@@ -47,8 +46,10 @@ const App = observer(() => {
 
   const hideCamera = !store.exercise || !isLoaded || store.state === WorkoutState.Invite;
   const handleLoaded = () => {
-    void store?.initialize(jwt);
     setLoaded(true);
+    if (jwt !== "") {
+      void store?.initialize(jwt);
+    }
   };
 
   if (mobileCheck()) {
@@ -87,8 +88,8 @@ const App = observer(() => {
                 <ExerciseHint
                   per={2000}
                   frames={[
-                    store.getExercise()?.image_down.replace(".png", ""),
-                    store.getExercise()?.image_up.replace(".png", ""),
+                    store.getExercise()?.image_down.replace(".png", ".svg"),
+                    store.getExercise()?.image_up.replace(".png", ".svg"),
                   ]}
                 />
               )}
@@ -111,20 +112,6 @@ const App = observer(() => {
         </S.Page>
       )}
 
-      {store.state === WorkoutState.Invite && (
-        <S.Overlay>
-          <div style={{ width: 400, marginRight: 64 }}>
-            <h1 style={{ color: "#fff" }}>Добро пожаловать!</h1>
-            <p style={{ color: "#fff" }}>
-              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в
-              браузере
-            </p>
-          </div>
-
-          <QRCode value={store.inviteCode} />
-        </S.Overlay>
-      )}
-
       {store.state === WorkoutState.Complete && (
         <S.Overlay style={{ flexDirection: "column" }}>
           <h1 style={{ color: "#fff" }}>Тренировка завершена!</h1>
@@ -139,12 +126,25 @@ const App = observer(() => {
         </S.Overlay>
       )}
 
-      {!isLoaded ||
-        (store.state === WorkoutState.Loading && (
-          <S.Overlay>
-            <h1 style={{ color: "#fff" }}>Загрузка...</h1>
-          </S.Overlay>
-        ))}
+      {(!isLoaded || store.state === WorkoutState.Loading) && (
+        <S.Overlay>
+          <h1 style={{ color: "#fff" }}>Загрузка...</h1>
+        </S.Overlay>
+      )}
+
+      {store.state === WorkoutState.Invite && (
+        <S.Overlay style={{ background: "#000" }}>
+          <div style={{ width: 400, marginRight: 64 }}>
+            <h1 style={{ color: "#fff" }}>Добро пожаловать!</h1>
+            <p style={{ color: "#fff" }}>
+              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в
+              браузере
+            </p>
+          </div>
+
+          <QRCode value={store.inviteCode} />
+        </S.Overlay>
+      )}
 
       {isVideo && (
         <S.Overlay onClick={() => setVideo(false)}>
