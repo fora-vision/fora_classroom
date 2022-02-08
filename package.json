@@ -12,11 +12,13 @@
     "@parcel/packager-raw-url": "^2.0.0-rc.0",
     "@parcel/transformer-image": "^2.0.0-rc.0",
     "@parcel/transformer-webmanifest": "^2.0.0-rc.0",
+    "@types/mixpanel-browser": "^2.38.0",
     "@types/react": "^17.0.38",
     "parcel": "^2.0.0-rc.0",
     "prettier": "^2.5.1"
   },
   "dependencies": {
+    "mixpanel-browser": "^2.43.0",
     "mobx": "^6.3.10",
     "mobx-react-lite": "^3.2.2",
     "react": "^17.0.2",

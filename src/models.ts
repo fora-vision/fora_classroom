@@ -47,6 +47,7 @@ export interface StartWorkoutPoint {
 }
 
 export interface RoomResponse {
+  user_id: number;
   workout: WorkoutModel;
   session: string;
 }
