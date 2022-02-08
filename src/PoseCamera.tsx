@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { FC, useEffect, useState } from "react";
 import { SkeletData } from "./models";
-import { countFPS } from './helpers';
+import { countFPS, generateImage } from './helpers';
 import * as S from "./styled";
 
 const initializePose = () => {
@@ -28,7 +28,9 @@ interface Props {
   onFps: (fsp: number) => void;
   onLoaded: () => void;
   onFrame: (data: SkeletData) => void;
+  onPhoto: (frame: number, photo: Blob) => void;
   highlightSkelet: boolean;
+  isSavePhotos: boolean;
   style: any;
 }
 
@@ -50,7 +52,8 @@ const flipLandmarks = (poseLandmarks) => {
   return points;
 };
 
-export const PoseCamera: FC<Props> = ({ onFrame, onFps, onLoaded, style, highlightSkelet }) => {
+export const PoseCamera: FC<Props> = (props) => {
+  const { onFrame, onPhoto, onFps, onLoaded, isSavePhotos, style, highlightSkelet } = props;
   const [pose] = useState(() => initializePose());
 
   useEffect(() => {
@@ -96,12 +99,27 @@ export const PoseCamera: FC<Props> = ({ onFrame, onFps, onLoaded, style, highlig
     let lastUpdate = window.performance.now();
     const fps = 1000 / 13; // Send max 12 fps
 
+    let frames = 0;
+    let lastPhotoUpdate = window.performance.now();
+
     const onResults = (results) => {
       const current = window.performance.now();
+      if (current - lastPhotoUpdate >= 1000 && isSavePhotos) {
+        lastPhotoUpdate = window.performance.now();
+        if (results.image instanceof HTMLCanvasElement) {
+          const currentFrame = frames;
+          generateImage(results.image, 640, 0.5).then((blob) => {
+            if (blob == null) return;
+            onPhoto(currentFrame, blob)
+          })
+        }
+      }
+      
       if (current - lastUpdate >= fps) {
         lastUpdate = window.performance.now();
         if (results.poseLandmarks) {
           onFrame(flipLandmarks(results.poseLandmarks));
+          frames += 1
         }
       }
 
@@ -139,7 +157,7 @@ export const PoseCamera: FC<Props> = ({ onFrame, onFps, onLoaded, style, highlig
     };
 
     pose.onResults(onResults);
-  }, [highlightSkelet]);
+  }, [highlightSkelet, isSavePhotos]);
 
   return (
     <S.Overlay style={style}>

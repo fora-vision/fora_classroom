@@ -2,7 +2,7 @@ import { action, computed, makeObservable, observable, runInAction } from "mobx"
 import { WorkoutWorker, WorkoutApi, WorkoutWorkerDelegate, WorkoutDisconnectStatus, watchConfirmRequest } from "./api";
 import { Exercise, SkeletData, WorkoutModel } from "./models";
 
-export enum WorkoutState {
+export enum WorkoutState {  
   Invite,
   Loading,
   InitializeFailed,
@@ -44,7 +44,9 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   private api = new WorkoutApi();
   private _totalTimer?: number;
 
-  public workout?: WorkoutModel;
+  private audio = new Audio()
+
+  public workout: WorkoutModel | null = null;
   public showReplaceButton = false;
   public inviteCode = "";
 
@@ -72,8 +74,10 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       exerciseCount: observable,
       progressCount: observable,
       pipeline: observable,
+      workout: observable,
 
       progress: computed,
+      isSavePhotos: computed,
 
       processFrame: action,
       generateInvite: action,
@@ -82,6 +86,9 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       onDidDisconnect: action,
       onDidStart: action,
     });
+
+    const soundUrl = new URL('./assets/complete.wav', import.meta.url);
+    this.audio.src = soundUrl.toString();
   }
 
   async generateInvite() {
@@ -102,7 +109,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     try {
       const { workout, session } = await this.api.loadRoom(jwt);
       this.api.setAuthToken(session);
-      this.workout = workout;
+      runInAction(() => this.workout = workout)
 
       this.exercises = await this.api.getExercises(workout.id);
       this.worker = new WorkoutWorker(workout.id);
@@ -130,6 +137,11 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     return this.progressCount / total;
   }
 
+  get isSavePhotos(): boolean {
+    console.log(this.workout)
+    return this.workout?.save_photos ?? false;
+  }
+
   getExercise(): Exercise | null {
     if (this.exercise) return this.exercises[this.exercise] ?? null;
     return null;
@@ -139,10 +151,19 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.worker?.sendFrame(skelet);
   };
 
+  onPhoto = (frame: number, photo: Blob) => {
+    if (this.workout == null) return
+    if (this.isSavePhotos == false) return;
+    this.api.uploadPhoto(this.workout.id, frame, photo)
+  }
+
   async onDidCompleteExercise() {
     this.highlightSkelet = true;
     this.exerciseCount -= 1;
     this.progressCount += 1;
+    this.audio.volume = 0.6;
+    this.audio.play()
+
     setTimeout(() => {
       runInAction(() => (this.highlightSkelet = false));
     }, 1000);

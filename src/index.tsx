@@ -67,10 +67,12 @@ const App = observer(() => {
   return (
     <div>
       <PoseCamera
+        isSavePhotos={store.isSavePhotos}
         style={{ opacity: hideCamera ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
         onFrame={store.processFrame}
         onLoaded={handleLoaded}
+        onPhoto={store.onPhoto}
         onFps={setFps}
       />
 
@@ -79,7 +81,10 @@ const App = observer(() => {
           <S.Screen>
             <S.TopAngle>
               <S.ExerciseTitle>{store.getExercise()?.name}</S.ExerciseTitle>
-              <S.Badge>{fps} FPS</S.Badge>
+              <div style={{ display: "flex" }}>
+                <S.Badge style={{ marginRight: 8 }}>{fps} FPS</S.Badge>
+                {store.isSavePhotos && <S.BadgeRec>REC</S.BadgeRec>}
+              </div>
             </S.TopAngle>
             <S.ExerciseCount>{store.exerciseCount}</S.ExerciseCount>
 
@@ -109,6 +114,15 @@ const App = observer(() => {
             <S.TimelineProgress style={{ width: `${store.progress * 100}%` }} />
             <S.TimelineTotal>{formatTime(store.totalTime)}</S.TimelineTotal>
           </S.Timeline>
+          <div style={{ display: "flex", justifyContent: "space-between " }}>
+            <S.TextTOS>
+              Занимаясь тренировками на этом сайте, вы соглашаетесь с{" "}
+              <a href="https://fora.vision/tos">условиями пользования</a>
+            </S.TextTOS>
+            <S.TextTOS style={{ fontWeight: "bold" }}>
+              <a href="https://fora.vision">Fora.Vision @2022</a>
+            </S.TextTOS>
+          </div>
         </S.Page>
       )}
 

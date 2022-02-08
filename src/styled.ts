@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const Page = styled.div`
   position: absolute;
@@ -11,6 +11,20 @@ export const Page = styled.div`
 
   padding: 32px 64px 64px;
 `;
+
+export const TextTOS = styled.p`
+  margin: 8px 0 -16px;
+  color: #333;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  width: fit-content;
+
+  a {
+    color: #000;
+  }
+`
 
 export const Screen = styled.div`
   position: relative;
@@ -83,6 +97,29 @@ export const Badge = styled.div`
   color: #ffffff;
   width: fit-content;
 `;
+
+const animation = keyframes`
+  0% { opacity: 0 }
+  30% { opacity: 1 }
+  70% { opacity: 1 }
+  100% { opacity: 0 }
+`
+
+export const BadgeRec = styled(Badge)`
+  display: flex;
+  align-items: center;
+
+  &::after {
+    content: "";
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: ${animation} 2s infinite;
+    background: tomato;
+    margin-left: 8px;
+  }
+`
 
 export const ExerciseTitle = styled(Badge)`
   font-size: 42px;

@@ -33,3 +33,20 @@ export const mobileCheck = () => {
   })(navigator.userAgent || navigator.vendor || (window as any).opera);
   return check;
 };
+
+
+export const generateImage = (image: HTMLCanvasElement, width: number, quality = 0.5): Promise<Blob | null> => {
+  return new Promise((resolve) => {
+    const newHeight = Math.floor(image.height / image.width * width)
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = newHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (ctx == null) return resolve(null);
+
+    ctx.drawImage(image, 0, 0, width, newHeight);
+    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+  })
+}

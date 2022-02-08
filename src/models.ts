@@ -35,6 +35,7 @@ export interface WorkoutModel {
   name: string;
   status: WorkoutStatus;
   body_part: string;
+  save_photos: boolean;
   program: {
     sets: WorkoutSet[];
   };

@@ -117,6 +117,16 @@ export class WorkoutApi {
     return res.exercises;
   }
 
+  async uploadPhoto(workout: number, frame: number, photo: Blob): Promise<void> {
+    const formData = new FormData();
+    formData.append("file", photo);
+
+    await this.fetch(`api/v2/workout/${workout}/screenshot/${frame}`, {
+      method: 'POST',
+      body: formData
+    });
+  }
+
   async loadRoom(jwt: string): Promise<RoomResponse> {
     return await this.fetch(`api/v2/workout/room?w=${jwt}`);
   }
