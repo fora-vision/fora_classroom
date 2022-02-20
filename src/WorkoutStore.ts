@@ -154,8 +154,8 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     return null;
   }
 
-  processFrame = (skelet: SkeletData) => {
-    this.worker?.sendFrame(skelet);
+  processFrame = (skelet: SkeletData, width: number, height: number) => {
+    this.worker?.sendFrame(skelet, width, height);
   };
 
   onPhoto = (frame: number, photo: Blob) => {

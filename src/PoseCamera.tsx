@@ -27,7 +27,7 @@ const initializePose = () => {
 interface Props {
   onFps: (fsp: number) => void;
   onLoaded: () => void;
-  onFrame: (data: SkeletData) => void;
+  onFrame: (data: SkeletData, width: number, height: number) => void;
   onPhoto: (frame: number, photo: Blob) => void;
   highlightSkelet: boolean;
   isSavePhotos: boolean;
@@ -118,8 +118,12 @@ export const PoseCamera: FC<Props> = (props) => {
       if (current - lastUpdate >= fps) {
         lastUpdate = window.performance.now();
         if (results.poseLandmarks) {
-          onFrame(flipLandmarks(results.poseLandmarks));
           frames += 1
+          onFrame(
+            flipLandmarks(results.poseLandmarks),
+            results.image.width,
+            results.image.height
+          );
         }
       }
 

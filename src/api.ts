@@ -79,12 +79,14 @@ export class WorkoutWorker {
     this.socket.send(JSON.stringify({ type: "REPLACE_EXERCISE" }));
   }
 
-  sendFrame(points: SkeletData) {
+  sendFrame(points: SkeletData, width: number, height: number) {
     if (!this.isStarted) return;
     this.socket.send(
       JSON.stringify({
         type: "FRAME",
         data: points,
+        width,
+        height
       })
     );
   }
