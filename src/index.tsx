@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import QRCode from "react-qr-code";
 
 // @ts-ignore
 import logoSrc from "./assets/logo.png";
@@ -39,8 +38,53 @@ const ExerciseHint = ({ frames, per }) => {
   );
 };
 
+const Instructions = () => (
+  <S.Instructions>
+    <h3>Что делать, если система плохо засчитывает выполнения? </h3>
+
+    <h4>Неправильное определение ключевых точек </h4>
+    <p>
+      Чаще всего проблемы с распознаванием связаны с тем, что неправильно определяются основные точки на теле человека.
+      Поэтому понаблюдайте за тем совпадают ли отрисованные точки с реальным положением частей тела и если это не так,
+      то:
+    </p>
+    <p>✅ Убедитесь, что в комнате достаточно светло - модель плохо работает в темноте</p>
+    <p>✅ Если скелетик перескакивает на окружающие вас вещи, то отодвиньте их</p>
+    <p>✅ Проверьте, что вы полностью помещаетесь в кадр</p>
+
+    <br />
+    <h4>{"Маленький FPS (fps < 10)"}</h4>
+    <p>
+      Низкий fps может быть причиной плохого распознавания. Значение своего fps отображается на экране во время
+      тренировки. Если ваш fps меньше 10:
+    </p>
+    <p>✅ Убедитесь, что у вас стабильное интернет соединение</p>
+    <p>
+      ✅ Попробуйте выполнить тренировку с другого устройства. <br />
+      Чаще всего низкий fps означает нехватку мощностей вашего устройства для распознавания
+    </p>
+    <p>
+      ✅ Если увеличить fps не получилось, то при быстрых упражнениях придется делать задержки в верхней и нижней позе
+      упражнения, чтобы система успевала зафиксировать выполнение
+    </p>
+    <br />
+
+    <h4>{"Неправильное выполнение/положение относительно камеры"}</h4>
+    <p>
+      ✅ Убедитесь, что вы выполняете тем же боком, что и анимация - это либо лицом, либо левым боком.
+      <br /> Упражнения неправильным боком могут хуже засчитываться
+    </p>
+    <p>
+      ✅ Попробуйте сделать "идеальное выполнение" - выполнения с максимальной амплитудой и правильной техникой. Система
+      не засчитывает некачественные выполнения
+    </p>
+  </S.Instructions>
+);
+
 const App = observer(() => {
   const [isVideo, setVideo] = useState(false);
+  const [isInstructions, setInstructions] = useState(false);
+
   const [isLoaded, setLoaded] = useState(false);
   const [fps, setFps] = useState(0);
 
@@ -58,8 +102,7 @@ const App = observer(() => {
         <img src={logoSrc} />
         <h1>Fora.Vision</h1>
         <br />
-        <p>Fora.Vision доступен для пользователей IOS! Установите приложение через TestFlight</p>
-        <a href="https://testflight.apple.com/join/U6JbWxG5">Скачать приложение</a>
+        <p>Откройте нас через компьютер, чтобы начать тренировку!</p>
       </S.MobileAccess>
     );
   }
@@ -86,7 +129,10 @@ const App = observer(() => {
                 {store.isSavePhotos && <S.BadgeRec>REC</S.BadgeRec>}
               </div>
             </S.TopAngle>
-            <S.ExerciseCount>{store.exerciseCount}</S.ExerciseCount>
+
+            <S.Badges>
+              <S.ExerciseCount>{store.exerciseCount}</S.ExerciseCount>
+            </S.Badges>
 
             <S.HelpSide>
               {store.state === WorkoutState.Hint && (
@@ -106,6 +152,9 @@ const App = observer(() => {
                   </S.HintButton>
                 )}
 
+                <S.HintButton onClick={() => setInstructions(true)} style={{ marginRight: 16 }}>
+                  Плохо распознает?
+                </S.HintButton>
                 <S.HintButton onClick={() => setVideo(true)}>Показать упражнение</S.HintButton>
               </div>
             </S.HelpSide>
@@ -147,16 +196,23 @@ const App = observer(() => {
       )}
 
       {store.state === WorkoutState.Invite && (
-        <S.Overlay style={{ background: "#000" }}>
-          <div style={{ width: 400, marginRight: 64 }}>
-            <h1 style={{ color: "#fff" }}>Добро пожаловать!</h1>
-            <p style={{ color: "#fff" }}>
-              Откройте приложение Fora.Vision на IOS и отсканируйте этот QR код, чтобы начать тренировку прямо в
-              браузере
-            </p>
-          </div>
+        <S.MobileAccess style={{ background: "#000" }}>
+          <img src={logoSrc} />
+          <h1>Fora.Vision</h1>
+          <br />
+          <p>Откройте нас в Telegram боте, чтобы выбрать тренировку!</p>
+        </S.MobileAccess>
+      )}
 
-          <QRCode value={store.inviteCode} />
+      {isInstructions && (
+        <S.Overlay onClick={() => setVideo(false)} style={{ background: "#000000" }}>
+          <Instructions />
+          <S.HintButton
+            style={{ position: "absolute", top: 64, bottom: "auto", right: 64 }}
+            onClick={() => setInstructions(false)}
+          >
+            Закрыть
+          </S.HintButton>
         </S.Overlay>
       )}
 

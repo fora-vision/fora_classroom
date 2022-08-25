@@ -24,7 +24,7 @@ export const TextTOS = styled.p`
   a {
     color: #000;
   }
-`
+`;
 
 export const Screen = styled.div`
   position: relative;
@@ -103,7 +103,7 @@ const animation = keyframes`
   30% { opacity: 1 }
   70% { opacity: 1 }
   100% { opacity: 0 }
-`
+`;
 
 export const BadgeRec = styled(Badge)`
   display: flex;
@@ -119,11 +119,21 @@ export const BadgeRec = styled(Badge)`
     background: tomato;
     margin-left: 8px;
   }
-`
+`;
 
 export const ExerciseTitle = styled(Badge)`
   font-size: 42px;
   width: 100%;
+`;
+
+export const Badges = styled.div`
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+
+  display: flex;
+  align-items: flex-end;
 `;
 
 export const ExerciseCount = styled.h2`
@@ -137,11 +147,15 @@ export const ExerciseCount = styled.h2`
   padding: 16px;
   border-radius: 16px;
   color: #fff;
-
-  position: absolute;
-  left: 0;
-  bottom: 0;
   margin: 0;
+  height: fit-content;
+`;
+
+export const TotalCount = styled(ExerciseCount)`
+  left: 20px;
+  font-size: 48px;
+  line-height: 48px;
+  margin-left: 16px;
 `;
 
 export const HelpSide = styled.div`
@@ -217,4 +231,54 @@ export const TimelineTotal = styled.div`
   align-items: flex-end;
   text-align: center;
   color: #020209;
+`;
+
+export const Instructions = styled.div`
+  max-width: 920px;
+  border-radius: 30px;
+  background: #fff;
+  padding: 32px;
+  box-sizing: border-box;
+
+  animation: anvil 0.3s cubic-bezier(0.38, 0.1, 0.36, 0.9) forwards;
+
+  @keyframes anvil {
+    0% {
+      transform: scale(1) translateY(0px);
+      opacity: 0;
+      box-shadow: 0 0 0 rgba(241, 241, 241, 0);
+    }
+    1% {
+      transform: scale(0.96) translateY(10px);
+      opacity: 0;
+      box-shadow: 0 0 0 rgba(241, 241, 241, 0);
+    }
+    100% {
+      transform: scale(1) translateY(0px);
+      opacity: 1;
+      box-shadow: 0 0 500px rgba(241, 241, 241, 0);
+    }
+  }
+
+  * {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+
+  h4 {
+    margin: 0;
+    margin-bottom: 8px;
+    font-size: 1.2em;
+  }
+
+  h3 {
+    margin: 0;
+    margin-bottom: 16px;
+    font-size: 2em;
+  }
+
+  p {
+    font-weight: normal;
+    margin: 6px 0;
+  }
 `;

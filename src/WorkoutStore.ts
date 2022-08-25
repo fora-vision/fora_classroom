@@ -47,7 +47,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   private api = new WorkoutApi();
   private _totalTimer?: number;
 
-  private audio = new Audio()
+  private audio = new Audio();
 
   public workout: WorkoutModel | null = null;
   public showReplaceButton = false;
@@ -90,32 +90,35 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       onDidStart: action,
     });
 
-    const soundUrl = new URL('./assets/complete.wav', import.meta.url);
+    const soundUrl = new URL("./assets/complete.wav", import.meta.url);
     this.audio.src = soundUrl.toString();
   }
 
   async generateInvite() {
-    try {
-      this.state = WorkoutState.Invite;
-      this.inviteCode = "FORA" + Math.random().toString(36).substr(2, 9);
-      const session = await watchConfirmRequest(this.inviteCode);
-      const newURL = new URL(window.location.href);
-      newURL.search = "?w=" + session;
-      window.history.pushState({ path: newURL.href }, "FORA.VISION", newURL.href);
-      await this.initialize(session, true);
-    } catch {
-      setTimeout(() => this.generateInvite(), 5000);
-    }
+    this.state = WorkoutState.Invite;
+
+    // We dont support mobile now :(
+    // try {
+    //   this.state = WorkoutState.Invite;
+    //   this.inviteCode = "FORA" + Math.random().toString(36).substr(2, 9);
+    //   const session = await watchConfirmRequest(this.inviteCode);
+    //   const newURL = new URL(window.location.href);
+    //   newURL.search = "?w=" + session;
+    //   window.history.pushState({ path: newURL.href }, "FORA.VISION", newURL.href);
+    //   await this.initialize(session, true);
+    // } catch {
+    //   setTimeout(() => this.generateInvite(), 5000);
+    // }
   }
 
   async initialize(jwt: string, fromQR = false) {
     try {
       const { workout, session, user_id } = await this.api.loadRoom(jwt);
       this.api.setAuthToken(session);
-      runInAction(() => this.workout = workout)
+      runInAction(() => (this.workout = workout));
 
-      mixpanel.identify(user_id.toString())
-      mixpanel.track("WEB_RUN_ROOM", { workout: workout.id, fromQR })
+      mixpanel.identify(user_id.toString());
+      mixpanel.track("WEB_RUN_ROOM", { workout: workout.id, fromQR });
 
       this.exercises = await this.api.getExercises(workout.id);
       this.worker = new WorkoutWorker(workout.id);
@@ -145,7 +148,6 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   }
 
   get isSavePhotos(): boolean {
-    console.log(this.workout)
     return this.workout?.save_photos ?? false;
   }
 
@@ -159,10 +161,10 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   };
 
   onPhoto = (frame: number, photo: Blob) => {
-    if (this.workout == null) return
+    if (this.workout == null) return;
     if (this.isSavePhotos == false) return;
-    this.api.uploadPhoto(this.workout.id, frame, photo)
-  }
+    this.api.uploadPhoto(this.workout.id, frame, photo);
+  };
 
   async onDidCompleteExercise() {
     if (this.workout == null) return;
@@ -170,12 +172,15 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.highlightSkelet = true;
     this.exerciseCount -= 1;
     this.progressCount += 1;
-    this.audio.volume = 0.6;
-    this.audio.play()
+
+    if (this.progressCount % 5 === 0) {
+      this.audio.volume = 0.6;
+      this.audio.play();
+    }
 
     mixpanel.track("WEB_СOMPLETE_EXERCISE", {
       workout: this.workout.id,
-      progress: this.progress
+      progress: this.progress,
     });
 
     setTimeout(() => {
