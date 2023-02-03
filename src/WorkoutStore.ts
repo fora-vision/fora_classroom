@@ -222,7 +222,7 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     mixpanel.track("WEB_DISCONNECT", { workout: wrk.workoutId, status });
     clearInterval(this._totalTimer);
 
-    if (status === WorkoutDisconnectStatus.Success) {
+    if (status === WorkoutDisconnectStatus.SuccessWorkout) {
       this.state = WorkoutState.Complete;
     } else {
       this.state = WorkoutState.Error;

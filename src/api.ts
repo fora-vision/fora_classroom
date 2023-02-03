@@ -1,10 +1,10 @@
 import { SkeletData, RoomResponse, Exercise } from "./models";
 
 export enum WorkoutDisconnectStatus {
-  Success = 1000,
   AlreadyCompleted = 3002,
   AlreadyStarted = 3003,
   NoFreeWorkers = 3005,
+  SuccessWorkout = 3006,
   Error = 0,
 }
 
