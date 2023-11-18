@@ -1,62 +1,23 @@
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
-import mixpanel from 'mixpanel-browser';
-mixpanel.init("063e9838740260bebb040a86ddca9f83")
+import mixpanel from "mixpanel-browser";
 
-import { WorkoutWorker, WorkoutApi, WorkoutWorkerDelegate, WorkoutDisconnectStatus, watchConfirmRequest } from "./api";
-import { Exercise, SkeletData, WorkoutModel } from "./models";
+import { WorkoutWorker, WorkoutApi, WorkoutDisconnectStatus } from "./api";
+import { Exercise, SkeletData, WorkoutModel, WorkoutState } from "./types";
+import { errorMessages, initializeError } from "./locales";
+import { WorkoutOndevice } from "./recognizer/recognizer";
 
-export enum WorkoutState {  
-  Invite,
-  Loading,
-  InitializeFailed,
-  Running,
-  Hint,
-  Error,
-  Complete,
-}
-
-const initializeError = {
-  title: "Не получилось запустить тренировку!",
-  description: "Такой тренировки не существует или отсутствует соединение с сервером",
-};
-
-const errorMessages = {
-  [WorkoutDisconnectStatus.AlreadyCompleted]: {
-    title: "Тренировка уже завершена",
-    description: "Вы уже выполнили эту тренировку, можете гордиться собой!",
-  },
-
-  [WorkoutDisconnectStatus.AlreadyStarted]: {
-    title: "Тренировка уже запущена",
-    description: "Проверьте, возможно вы открыли ее в соседнем окне.",
-  },
-
-  [WorkoutDisconnectStatus.NoFreeWorkers]: {
-    title: "Нет свободных ресурсов",
-    description: "На данный момент слишком много активных тренировок, попробуйте позже",
-  },
-
-  [WorkoutDisconnectStatus.Error]: {
-    title: "Проблемы с интернет соединением",
-    description: "Попробуйте перезагрузить страницу...",
-  },
-};
-
-export class WorkoutRoom implements WorkoutWorkerDelegate {
-  private worker?: WorkoutWorker;
+export class WorkoutRoom {
+  private audio = new Audio();
+  private worker?: WorkoutOndevice;
   private api = new WorkoutApi();
   private _totalTimer?: number;
-
-  private audio = new Audio();
 
   public workout: WorkoutModel | null = null;
   public showReplaceButton = false;
   public inviteCode = "";
 
-  public exercise = "";
-  public progressCount = 0;
-  public exerciseCount = 0;
-  public pipeline: number[] = [];
+  public completedActionsCount = 0;
+  public pipeline: { label: string; count: number }[] = [];
 
   public exercises: Record<string, Exercise> = {};
   public state: WorkoutState = WorkoutState.Loading;
@@ -64,28 +25,31 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   public highlightSkelet = false;
   public totalTime = 0;
 
+  public isBlocked = false;
+
   constructor() {
     makeObservable(this, {
       highlightSkelet: observable,
       totalTime: observable,
-      exercise: observable,
       state: observable,
       error: observable,
 
       inviteCode: observable,
       showReplaceButton: observable,
-      exerciseCount: observable,
-      progressCount: observable,
+      completedActionsCount: observable,
       pipeline: observable,
       workout: observable,
 
+      position: computed,
+      current: computed,
       progress: computed,
+      actionsInCompletedExercises: computed,
+      actionsLeftForCurrentExercise: computed,
+      currentExerciseDetails: computed,
       isSavePhotos: computed,
 
       processFrame: action,
-      generateInvite: action,
       onDidReplaceExercise: action,
-      onDidNextExercise: action,
       onDidDisconnect: action,
       onDidStart: action,
     });
@@ -94,46 +58,33 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.audio.src = soundUrl.toString();
   }
 
-  async generateInvite() {
-    this.state = WorkoutState.Invite;
-
-    // We dont support mobile now :(
-    // try {
-    //   this.state = WorkoutState.Invite;
-    //   this.inviteCode = "FORA" + Math.random().toString(36).substr(2, 9);
-    //   const session = await watchConfirmRequest(this.inviteCode);
-    //   const newURL = new URL(window.location.href);
-    //   newURL.search = "?w=" + session;
-    //   window.history.pushState({ path: newURL.href }, "FORA.VISION", newURL.href);
-    //   await this.initialize(session, true);
-    // } catch {
-    //   setTimeout(() => this.generateInvite(), 5000);
-    // }
-  }
-
   async initialize(jwt: string, fromQR = false) {
     try {
       const { workout, session, user_id } = await this.api.loadRoom(jwt);
+      this.exercises = await this.api.getExercises(workout.id);
       this.api.setAuthToken(session);
-      runInAction(() => (this.workout = workout));
 
       mixpanel.identify(user_id.toString());
       mixpanel.track("WEB_RUN_ROOM", { workout: workout.id, fromQR });
 
-      this.exercises = await this.api.getExercises(workout.id);
-      this.worker = new WorkoutWorker(workout.id);
-      this.worker!.delegate = this;
-
-      for (let set of workout.program.sets) {
-        for (let repeat = 0; repeat < set.repeats; repeat++) {
-          this.pipeline.push(...set.exercises.map((ex) => ex.count));
+      runInAction(() => {
+        this.pipeline = [];
+        for (let set of workout.program.sets) {
+          for (let repeat = 0; repeat < set.repeats; repeat++) {
+            this.pipeline.push(...set.exercises.map((ex) => ({ ...ex })));
+          }
         }
-      }
 
-      this._totalTimer = setInterval(() => {
-        runInAction(() => (this.totalTime += 1));
-      }, 1000) as any;
-    } catch {
+        this.workout = workout;
+        this.state = WorkoutState.Running;
+        this.worker = new WorkoutOndevice(this);
+
+        this._totalTimer = setInterval(() => {
+          runInAction(() => (this.totalTime += 1));
+        }, 1000) as any;
+      });
+    } catch (e) {
+      console.log(e);
       mixpanel.track("WEB_ERROR");
       runInAction(() => {
         this.state = WorkoutState.Error;
@@ -142,21 +93,46 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     }
   }
 
+  get current(): { label: string; count: number } | null {
+    return this.pipeline[this.position] || null;
+  }
+
+  get position() {
+    let before = 0;
+    let after = 0;
+    return this.pipeline.findIndex((t) => {
+      after += t.count;
+      const isAdjust = this.completedActionsCount >= before && this.completedActionsCount < after;
+      before = after;
+      return isAdjust;
+    });
+  }
+
   get progress() {
-    const total = this.pipeline.reduce((a, b) => a + b, 0);
-    return this.progressCount / total;
+    const total = this.pipeline.reduce((a, b) => a + b.count, 0);
+    return this.completedActionsCount / total;
+  }
+
+  get actionsInCompletedExercises() {
+    return this.pipeline.slice(0, this.position).reduce((a, b) => a + b.count, 0);
+  }
+
+  get actionsLeftForCurrentExercise() {
+    if (this.current == null) return 0;
+    return this.actionsInCompletedExercises + this.current.count - this.completedActionsCount;
   }
 
   get isSavePhotos(): boolean {
     return this.workout?.save_photos ?? false;
   }
 
-  getExercise(): Exercise | null {
-    if (this.exercise) return this.exercises[this.exercise] ?? null;
-    return null;
+  get currentExerciseDetails(): Exercise | null {
+    if (this.current == null) return null;
+    return this.exercises[this.current.label] ?? null;
   }
 
   processFrame = (skelet: SkeletData, width: number, height: number) => {
+    if (this.isBlocked) return;
     this.worker?.sendFrame(skelet, width, height);
   };
 
@@ -166,24 +142,40 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.api.uploadPhoto(this.workout.id, frame, photo);
   };
 
+  private _highlightSkeletTimer?: NodeJS.Timeout;
   async onDidCompleteExercise() {
-    if (this.workout == null) return;
+    if (this.workout == null || this.current == null) return;
 
     this.highlightSkelet = true;
-    this.exerciseCount -= 1;
-    this.progressCount += 1;
-
-    if (this.progressCount % 5 === 0) {
+    this.completedActionsCount += 1;
+    if (this.completedActionsCount % 5 === 0) {
       this.audio.volume = 0.6;
       this.audio.play();
     }
 
-    mixpanel.track("WEB_СOMPLETE_EXERCISE", {
-      workout: this.workout.id,
-      progress: this.progress,
-    });
+    mixpanel.track("WEB_СOMPLETE_EXERCISE", { workout: this.workout.id, progress: this.progress });
+    if (this.current && this.actionsLeftForCurrentExercise === this.current.count) {
+      this.isBlocked = true;
+      this.state = WorkoutState.Hint;
+      mixpanel.track("WEB_NEXT_EXERCISE", {
+        workout: this.workout.id,
+        exercise: this.current.label,
+        count: this.current.count,
+        position: this.position,
+      });
 
-    setTimeout(() => {
+      setTimeout(() => {
+        this.isBlocked = false;
+      }, 1000);
+    }
+
+    if (this.progress === 1) {
+      this.state = WorkoutState.Complete;
+      mixpanel.track("WEB_WORKOUT_COMPLETE");
+    }
+
+    clearTimeout(this._highlightSkeletTimer);
+    this._highlightSkeletTimer = setTimeout(() => {
       runInAction(() => (this.highlightSkelet = false));
     }, 1000);
   }
@@ -205,17 +197,10 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
 
   onDidReplaceExercise(wrk: WorkoutWorker, exercise: string, count: number, position: number): void {
     mixpanel.track("WEB_REPLACE_EXERCISE", { workout: wrk.workoutId, exercise, count, position });
-    this.onDidNextExercise(wrk, exercise, count, position);
-  }
 
-  onDidNextExercise(wrk: WorkoutWorker, exercise: string, count: number, position: number): void {
-    mixpanel.track("WEB_NEXT_EXERCISE", { workout: wrk.workoutId, exercise, count, position });
-
-    this.pipeline[position] = count;
-    this.progressCount = this.pipeline.slice(0, position).reduce((a, b) => a + b, 0);
+    this.pipeline[position] = { label: exercise, count };
+    this.completedActionsCount = this.pipeline.slice(0, this.position).reduce((a, b) => a + b.count, 0);
     this.state = WorkoutState.Hint;
-    this.exerciseCount = count;
-    this.exercise = exercise;
   }
 
   onDidDisconnect(wrk: WorkoutWorker, status: WorkoutDisconnectStatus) {

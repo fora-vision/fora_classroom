@@ -34,10 +34,9 @@ export const mobileCheck = () => {
   return check;
 };
 
-
 export const generateImage = (image: HTMLCanvasElement, width: number, quality = 0.5): Promise<Blob | null> => {
   return new Promise((resolve) => {
-    const newHeight = Math.floor(image.height / image.width * width)
+    const newHeight = Math.floor((image.height / image.width) * width);
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -47,6 +46,14 @@ export const generateImage = (image: HTMLCanvasElement, width: number, quality =
     if (ctx == null) return resolve(null);
 
     ctx.drawImage(image, 0, 0, width, newHeight);
-    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
-  })
-}
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+  });
+};
+
+export const formatTime = (time: number) => {
+  const mm = Math.floor(time / 60);
+  const fm = mm < 10 ? "0" + mm : mm;
+  const ss = time % 60;
+  const fs = ss < 10 ? "0" + ss : ss;
+  return `${fm}:${fs}`;
+};

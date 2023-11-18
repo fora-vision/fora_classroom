@@ -1,4 +1,4 @@
-import { SkeletData, RoomResponse, Exercise } from "./models";
+import { SkeletData, RoomResponse, Exercise } from "./types";
 
 export enum WorkoutDisconnectStatus {
   AlreadyCompleted = 3002,
@@ -86,7 +86,7 @@ export class WorkoutWorker {
         type: "FRAME",
         data: points,
         width,
-        height
+        height,
       })
     );
   }
@@ -124,8 +124,8 @@ export class WorkoutApi {
     formData.append("file", photo);
 
     await this.fetch(`api/v2/workout/${workout}/screenshot/${frame}`, {
-      method: 'POST',
-      body: formData
+      method: "POST",
+      body: formData,
     });
   }
 

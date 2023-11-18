@@ -1,0 +1,371 @@
+{
+  "none_exercise": "None",
+  "keyMoment": {
+    "side_plank-straight": "up",
+    "knee_tightening": "down",
+    "sit_up": "up",
+    "leglifts": "up",
+    "side_leglifts-left": "up",
+    "squats": "down",
+    "superman-right": "up",
+    "lunges-right": "down",
+    "superman_lie": "up",
+    "superman_side": "up",
+    "pushups": "down",
+    "lunges-left": "down",
+    "twisting": "up",
+    "star": "up",
+    "jumping": "up",
+    "swimmer": "down",
+    "side_leglifts-right": "up",
+    "knees_raising": "down",
+    "side_plank-back": "up",
+    "bicycle": "down",
+    "burpee": "up",
+    "toe_touches": "up",
+    "angel_wings": "down",
+    "reverse_pushups": "down",
+    "superman-left": "up",
+    "folding_bed": "up",
+    "hip_thrust": "up"
+  },
+  "exercise_threshold": {
+    "angel_wings": {
+      "up": 0.55,
+      "down": 0.55,
+      "other": 0.3
+    },
+    "bicycle": {
+      "up": 0.5,
+      "down": 0.5,
+      "other": 0.3
+    },
+    "burpee": {
+      "up": 0.54,
+      "down": 0.54,
+      "other": 0.3
+    },
+    "cobra": {
+      "up": 0.36,
+      "down": 0.36,
+      "other": 0.3
+    },
+    "folding_bed": {
+      "up": 0.58,
+      "down": 0.49,
+      "other": 0.3
+    },
+    "hip_thrust": {
+      "up": 0.4,
+      "down": 0.38,
+      "other": 0.3
+    },
+    "jumping": {
+      "up": 0.47,
+      "down": 0.5,
+      "other": 0.3
+    },
+    "knee_tightening": {
+      "up": 0.61,
+      "down": 0.44,
+      "other": 0.3
+    },
+    "knees_raising": {
+      "up": 0.55,
+      "down": 0.4,
+      "other": 0.3
+    },
+    "leglifts": {
+      "up": 0.59,
+      "down": 0.46,
+      "other": 0.3
+    },
+    "lunges-left": {
+      "up": 0.44,
+      "down": 0.45,
+      "other": 0.3
+    },
+    "lunges-right": {
+      "up": 0.42,
+      "down": 0.43,
+      "other": 0.3
+    },
+    "pause": {
+      "up": 0.35,
+      "down": 0.35,
+      "other": 0.3
+    },
+    "planka_static": {
+      "up": 0.45,
+      "down": 0.35,
+      "other": 0.3
+    },
+    "pushups": {
+      "up": 0.36,
+      "down": 0.37,
+      "other": 0.3
+    },
+    "hard_pushups": {
+      "up": 0.36,
+      "down": 0.37,
+      "other": 0.3
+    },
+    "reverse_pushups": {
+      "up": 0.42,
+      "down": 0.46,
+      "other": 0.3
+    },
+    "side_leglifts-left": {
+      "up": 0.57,
+      "down": 0.41,
+      "other": 0.3
+    },
+    "side_leglifts-right": {
+      "up": 0.55,
+      "down": 0.41,
+      "other": 0.3
+    },
+    "side_plank-back": {
+      "up": 0.74,
+      "down": 0.47,
+      "other": 0.3
+    },
+    "side_plank-straight": {
+      "up": 0.78,
+      "down": 0.45,
+      "other": 0.3
+    },
+    "side_twisting": {
+      "up": 0.45,
+      "down": 0.6,
+      "other": 0.3
+    },
+    "sit_up": {
+      "up": 0.38,
+      "down": 0.47,
+      "other": 0.3
+    },
+    "speed_skater": {
+      "up": 0.45,
+      "down": 0.33,
+      "other": 0.3
+    },
+    "squats": {
+      "up": 0.46,
+      "down": 0.64,
+      "other": 0.3
+    },
+    "star": {
+      "up": 0.39,
+      "down": 0.39,
+      "other": 0.3
+    },
+    "superman-left": {
+      "up": 0.37,
+      "down": 0.42,
+      "other": 0.3
+    },
+    "superman-right": {
+      "up": 0.57,
+      "down": 0.42,
+      "other": 0.3
+    },
+    "superman_lie": {
+      "up": 0.4,
+      "down": 0.38,
+      "other": 0.3
+    },
+    "superman_side": {
+      "up": 0.47,
+      "down": 0.49,
+      "other": 0.3
+    },
+    "swimmer": {
+      "up": 0.42,
+      "down": 0.41,
+      "other": 0.3
+    },
+    "toe_touches": {
+      "up": 0.44,
+      "down": 0.39,
+      "other": 0.3
+    },
+    "twisting": {
+      "up": 0.46,
+      "down": 0.53,
+      "other": 0.3
+    }
+  },
+  "model_batch_size": 12,
+  "image_height": 1080,
+  "image_width": 1920,
+  "not_none_legs": ["side_plank-straight", "side_plank-back", "reverse_pushups", "pushups"],
+  "not_not_hands": [],
+  "exercise_part": {
+    "side_plank-straight": ["hand", "leg"],
+    "knee_tightening": ["leg"],
+    "sit_up": ["hand", "leg"],
+    "leglifts": ["leg"],
+    "side_leglifts-left": ["leg"],
+    "squats": ["leg"],
+    "superman-right": ["hand", "leg"],
+    "lunges-right": ["leg"],
+    "superman_lie": ["hand", "leg"],
+    "superman_side": ["hand"],
+    "pushups": ["hand", "leg"],
+    "lunges-left": ["leg"],
+    "twisting": ["leg"],
+    "star": ["hand", "leg"],
+    "jumping": ["hand", "leg"],
+    "hard_pushups": ["hand", "leg"],
+    "swimmer": ["hand", "leg"],
+    "side_leglifts-right": ["leg"],
+    "knees_raising": ["leg"],
+    "side_plank-back": ["hand", "leg"],
+    "bicycle": ["hand", "leg"],
+    "burpee": ["hand", "leg"],
+    "toe_touches": ["hand", "leg"],
+    "angel_wings": ["hand"],
+    "reverse_pushups": ["hand", "leg"],
+    "superman-left": ["hand", "leg"],
+    "folding_bed": ["leg"],
+    "hip_thrust": ["leg"]
+  },
+  "exercise_without_legs": ["superman_side", "angel_wings"],
+  "exercise_without_hands": [
+    "squats",
+    "lunges-left",
+    "lunges-right",
+    "twisting",
+    "folding_bed",
+    "knees_raising",
+    "speed_skater",
+    "hip_thrust",
+    "leglifts",
+    "knee_tightening",
+    "side_twisting",
+    "side_leglifts-left",
+    "side_leglifts-right",
+    "cobra"
+  ],
+  "body_parts": ["hand", "leg"],
+  "no_swap_exercises": ["side_leglifts-left", "side_leglifts-right", "star", "knees_raising"],
+  "all_exercise": [
+    "side_plank-straight",
+    "knee_tightening",
+    "sit_up",
+    "leglifts",
+    "side_leglifts-left",
+    "squats",
+    "superman-right",
+    "lunges-right",
+    "superman_lie",
+    "superman_side",
+    "pushups",
+    "lunges-left",
+    "twisting",
+    "star",
+    "jumping",
+    "hard_pushups",
+    "swimmer",
+    "side_leglifts-right",
+    "knees_raising",
+    "side_plank-back",
+    "bicycle",
+    "burpee",
+    "toe_touches",
+    "angel_wings",
+    "reverse_pushups",
+    "superman-left",
+    "folding_bed",
+    "hip_thrust"
+  ],
+  "poses_graph": {
+    "side_plank-straight_up": ["side_plank-straight_up"],
+    "side_plank-back_down": ["side_plank-straight_down", "side_plank-back_down"],
+    "knee_tightening_up": ["knee_tightening_up"],
+    "pushups_up": ["knee_tightening_down", "pushups_up"],
+    "sit_up_up": ["sit_up_up"],
+    "sit_up_down": ["sit_up_down"],
+    "side_twisting_up": ["side_twisting_up"],
+    "side_twisting_down": ["side_twisting_down"],
+    "leglifts_up": ["leglifts_up"],
+    "leglifts_down": ["leglifts_down"],
+    "side_leglifts-left_up": ["side_leglifts-left_up"],
+    "side_leglifts-left_down": ["side_leglifts-left_down"],
+    "squats_up": ["squats_up", "lunges-right_up", "lunges-left_up"],
+    "burpee_up": ["squats_up", "jumping_up", "burpee_up"],
+    "squats_down": ["squats_down"],
+    "jumping_down": ["squats_down", "jumping_down"],
+    "superman-right_up": ["superman-right_up"],
+    "superman-left_down": ["superman-right_down", "superman-left_down"],
+    "lunges-left_down": ["lunges-right_down", "lunges-left_down"],
+    "superman_lie_up": ["superman_lie_up"],
+    "superman_lie_down": ["superman_lie_down", "superman_side_down", "angel_wings_up"],
+    "superman_side_up": ["superman_side_up"],
+    "pushups_down": ["pushups_down", "burpee_down"],
+    "twisting_up": ["twisting_up"],
+    "twisting_down": ["twisting_down"],
+    "star_up": ["star_up"],
+    "star_down": ["star_down"],
+    "hard_pushups_up": ["hard_pushups_up"],
+    "hard_pushups_down": ["hard_pushups_down"],
+    "swimmer_up": ["swimmer_up"],
+    "swimmer_down": ["swimmer_down"],
+    "side_leglifts-right_up": ["side_leglifts-right_up"],
+    "side_leglifts-right_down": ["side_leglifts-right_down"],
+    "knees_raising_up": ["knees_raising_up"],
+    "knees_raising_down": ["knees_raising_down"],
+    "side_plank-back_up": ["side_plank-back_up"],
+    "bicycle_up": ["bicycle_up"],
+    "bicycle_down": ["bicycle_down"],
+    "toe_touches_up": ["toe_touches_up"],
+    "toe_touches_down": ["toe_touches_down"],
+    "angel_wings_down": ["angel_wings_down"],
+    "reverse_pushups_up": ["reverse_pushups_up"],
+    "reverse_pushups_down": ["reverse_pushups_down"],
+    "cobra_up": ["cobra_up"],
+    "cobra_down": ["cobra_down"],
+    "superman-left_up": ["superman-left_up"],
+    "folding_bed_up": ["folding_bed_up"],
+    "folding_bed_down": ["folding_bed_down"],
+    "hip_thrust_up": ["hip_thrust_up"],
+    "hip_thrust_down": ["hip_thrust_down"]
+  },
+
+  "stay_pose": [
+    { "x": 0.47317972779273987, "y": 0.10763243585824966, "z": -0.16553984582424164, "p": 0.99998539686203 },
+    { "x": 0.4763355553150177, "y": 0.09377776831388474, "z": -0.15053114295005798, "p": 0.9999780654907227 },
+    { "x": 0.4788894057273865, "y": 0.09402704983949661, "z": -0.15054942667484283, "p": 0.9999498724937439 },
+    { "x": 0.48156169056892395, "y": 0.09459356963634491, "z": -0.15050968527793884, "p": 0.9999672770500183 },
+    { "x": 0.4677134156227112, "y": 0.09308460354804993, "z": -0.152731791138649, "p": 0.9999798536300659 },
+    { "x": 0.4641352593898773, "y": 0.09285331517457962, "z": -0.15274474024772644, "p": 0.9999613761901855 },
+    { "x": 0.4606698453426361, "y": 0.09297487884759903, "z": -0.15266379714012146, "p": 0.9999783039093018 },
+    { "x": 0.4817325472831726, "y": 0.1019289419054985, "z": -0.06726919859647751, "p": 0.9999223947525024 },
+    { "x": 0.4536484181880951, "y": 0.10115921497344971, "z": -0.07673656940460205, "p": 0.9999346733093262 },
+    { "x": 0.47659868001937866, "y": 0.12313376367092133, "z": -0.13450346887111664, "p": 0.9999923706054688 },
+    { "x": 0.46594685316085815, "y": 0.12322258949279785, "z": -0.13716143369674683, "p": 0.9999932050704956 },
+    { "x": 0.5019683241844177, "y": 0.18489252030849457, "z": -0.02553548663854599, "p": 0.999977171421051 },
+    { "x": 0.42695558071136475, "y": 0.18743544816970825, "z": -0.02922246791422367, "p": 0.9999763369560242 },
+    { "x": 0.5114226341247559, "y": 0.2861201763153076, "z": -0.0017655000556260347, "p": 0.9848372340202332 },
+    { "x": 0.4156895875930786, "y": 0.2891570031642914, "z": -0.012011153623461723, "p": 0.9886247515678406 },
+    { "x": 0.5184503793716431, "y": 0.37133991718292236, "z": -0.0733998566865921, "p": 0.971728503704071 },
+    { "x": 0.4079839289188385, "y": 0.3834301829338074, "z": -0.09296033531427383, "p": 0.9800693988800049 },
+    { "x": 0.5234368443489075, "y": 0.4000655710697174, "z": -0.09710117429494858, "p": 0.9539199471473694 },
+    { "x": 0.4031359553337097, "y": 0.4121312201023102, "z": -0.12051811069250107, "p": 0.9656901955604553 },
+    { "x": 0.521426260471344, "y": 0.40142783522605896, "z": -0.12403763830661774, "p": 0.9543771147727966 },
+    { "x": 0.40807437896728516, "y": 0.41237872838974, "z": -0.14682962000370026, "p": 0.9661785364151001 },
+    { "x": 0.5169195532798767, "y": 0.3909057676792145, "z": -0.08636453002691269, "p": 0.9434176087379456 },
+    { "x": 0.4119546115398407, "y": 0.40351659059524536, "z": -0.10604836046695709, "p": 0.9578841328620911 },
+    { "x": 0.48494043946266174, "y": 0.38424378633499146, "z": 0.0004342076717875898, "p": 0.9998371005058289 },
+    { "x": 0.4403055012226105, "y": 0.38217082619667053, "z": -0.00036921462742611766, "p": 0.9998192191123962 },
+    { "x": 0.49085670709609985, "y": 0.5373125076293945, "z": -0.018921982496976852, "p": 0.9949590563774109 },
+    { "x": 0.43450888991355896, "y": 0.5325802564620972, "z": -0.008858024142682552, "p": 0.9942445755004883 },
+    { "x": 0.4923875629901886, "y": 0.6694933176040649, "z": 0.12133921682834625, "p": 0.9873740673065186 },
+    { "x": 0.4381778836250305, "y": 0.6618909239768982, "z": 0.1459755301475525, "p": 0.9855005741119385 },
+    { "x": 0.48788490891456604, "y": 0.6855179667472839, "z": 0.12400899082422256, "p": 0.8859012722969055 },
+    { "x": 0.44365647435188293, "y": 0.6746935844421387, "z": 0.13929139077663422, "p": 0.8977558612823486 },
+    { "x": 0.4993356466293335, "y": 0.7137196660041809, "z": 0.02462630718946457, "p": 0.9774392247200012 },
+    { "x": 0.4298376441001892, "y": 0.7155472040176392, "z": 0.03402598574757576, "p": 0.9780747890472412 }
+  ]
+}

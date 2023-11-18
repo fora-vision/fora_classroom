@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { FC, useEffect, useState } from "react";
-import { SkeletData } from "./models";
-import { countFPS, generateImage } from './helpers';
-import * as S from "./styled";
+import { countFPS, generateImage } from "./helpers";
+import { SkeletData } from "./types";
+import * as S from "./views/styled";
 
 const initializePose = () => {
   const pose = new Pose({
@@ -60,7 +60,7 @@ export const PoseCamera: FC<Props> = (props) => {
     const videoElement = document.getElementsByClassName("input_video")[0];
     const canvasElement = document.getElementsByClassName("output_canvas")[0];
     const size = { width: 1280, height: 720 };
-    let isLoaded = false
+    let isLoaded = false;
 
     const resizeCanvas = () => {
       const aspect = size.height / size.width;
@@ -110,39 +110,29 @@ export const PoseCamera: FC<Props> = (props) => {
           const currentFrame = frames;
           generateImage(results.image, 640, 0.5).then((blob) => {
             if (blob == null) return;
-            onPhoto(currentFrame, blob)
-          })
+            onPhoto(currentFrame, blob);
+          });
         }
       }
-      
+
       if (current - lastUpdate >= fps) {
         lastUpdate = window.performance.now();
         if (results.poseLandmarks) {
-          frames += 1
-          onFrame(
-            flipLandmarks(results.poseLandmarks),
-            results.image.width,
-            results.image.height
-          );
+          frames += 1;
+          onFrame(flipLandmarks(results.poseLandmarks), results.image.width, results.image.height);
         }
       }
 
-      onFps(countFPS())
+      onFps(countFPS());
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      canvasCtx.drawImage(
-        results.image,
-        0,
-        0,
-        canvasElement.width,
-        canvasElement.height
-      );
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
       if (results.poseLandmarks) {
-        const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }))
-        const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }))
+        const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }));
+        const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }));
         for (let i = 0; i < 11; i++) {
-          landmarksRight[i].visibility = 0
-          landmarks[i].visibility = 0
+          landmarksRight[i].visibility = 0;
+          landmarks[i].visibility = 0;
         }
 
         drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {
@@ -166,12 +156,7 @@ export const PoseCamera: FC<Props> = (props) => {
   return (
     <S.Overlay style={style}>
       <video hidden className="input_video"></video>
-      <canvas
-        style={{ margin: "auto", display: "block" }}
-        className="output_canvas"
-        width="1280px"
-        height="720px"
-      ></canvas>
+      <canvas style={{ margin: "auto", display: "block" }} className="output_canvas" width="1280px" height="720px"></canvas>
     </S.Overlay>
   );
 };
