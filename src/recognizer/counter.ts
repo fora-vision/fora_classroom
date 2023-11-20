@@ -1,7 +1,7 @@
-import Config from "./config.json";
+import { RecognizerOndevice } from "./Recognizer";
 
 class Counter {
-  constructor(readonly fps) {}
+  constructor(readonly fps, readonly worker: RecognizerOndevice) {}
 
   forGood = Math.max((3 * Math.round(this.fps)) / 30, 1);
   nowPose = "star_up";
@@ -15,6 +15,8 @@ class Counter {
   }
 
   step(poseName) {
+    if (this.worker.config == null) return null;
+
     if (poseName === this.nowPose) {
       this.cntFrames += 1;
     } else {
@@ -26,7 +28,7 @@ class Counter {
       const [pose, t] = this.nowPose.split("_");
       if (this.last.get(pose) !== t) {
         this.last.set(pose, t);
-        if (Config.keyMoment[pose] === t && this.first) return pose;
+        if (this.worker.config.keyMoment[pose] === t && this.first) return pose;
         this.first = true;
       }
     }

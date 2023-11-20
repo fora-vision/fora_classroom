@@ -1,20 +1,21 @@
-import { action, computed, makeObservable, observable, runInAction } from "mobx";
+import { action, computed, flow, makeObservable, observable, runInAction } from "mobx";
 import mixpanel from "mixpanel-browser";
+import crypto from "crypto";
 
-import { WorkoutWorker, WorkoutApi, WorkoutDisconnectStatus } from "./api";
-import { Exercise, SkeletData, WorkoutModel, WorkoutState } from "./types";
-import { errorMessages, initializeError } from "./locales";
-import { WorkoutOndevice } from "./recognizer/recognizer";
+import { Exercise, SkeletData, WorkoutBatch, WorkoutModel, WorkoutState, initializeError } from "./types";
+import { RecognizerOndevice } from "./recognizer/Recognizer";
+import { AutoQueue, wait } from "./helpers";
+import { WorkoutApi } from "./api";
 
 export class WorkoutRoom {
   private audio = new Audio();
-  private worker?: WorkoutOndevice;
+  private worker: RecognizerOndevice;
   private api = new WorkoutApi();
   private _totalTimer?: number;
 
   public workout: WorkoutModel | null = null;
   public showReplaceButton = false;
-  public inviteCode = "";
+  public exerciseReplacing = false;
 
   public completedActionsCount = 0;
   public pipeline: { label: string; count: number }[] = [];
@@ -23,73 +24,77 @@ export class WorkoutRoom {
   public state: WorkoutState = WorkoutState.Loading;
   public error = { title: "", description: "" };
   public highlightSkelet = false;
+  public isBlocked = false;
   public totalTime = 0;
 
-  public isBlocked = false;
+  private frameId = 0;
+  private batchesQueue = new AutoQueue();
+  private completedExercises: WorkoutBatch["exercises"] = [];
+  private completedFrames: SkeletData[] = [];
+  private _highlightSkeletTimer?: number;
 
   constructor() {
     makeObservable(this, {
       highlightSkelet: observable,
+      exerciseReplacing: observable,
       totalTime: observable,
       state: observable,
       error: observable,
 
-      inviteCode: observable,
       showReplaceButton: observable,
       completedActionsCount: observable,
       pipeline: observable,
       workout: observable,
 
-      position: computed,
-      current: computed,
-      progress: computed,
       actionsInCompletedExercises: computed,
       actionsLeftForCurrentExercise: computed,
       currentExerciseDetails: computed,
       isSavePhotos: computed,
+      position: computed,
+      progress: computed,
+      current: computed,
 
-      processFrame: action,
-      onDidReplaceExercise: action,
-      onDidDisconnect: action,
-      onDidStart: action,
+      onDidComplete: action,
+      onDidError: action,
+      processFrame: flow,
+      initialize: flow,
     });
 
-    const soundUrl = new URL("./assets/complete.wav", import.meta.url);
-    this.audio.src = soundUrl.toString();
+    this.audio.src = new URL("./assets/complete.wav", import.meta.url).toString();
+    this.worker = new RecognizerOndevice(this);
   }
 
-  async initialize(jwt: string, fromQR = false) {
+  *initialize(jwt: string, fromQR = false) {
     try {
-      const { workout, session, user_id } = await this.api.loadRoom(jwt);
-      this.exercises = await this.api.getExercises(workout.id);
-      this.api.setAuthToken(session);
+      this.api = new WorkoutApi(jwt);
+      const { workout, user_id } = yield this.api.loadRoom(jwt);
+      this.exercises = yield this.api.getExercises();
 
       mixpanel.identify(user_id.toString());
       mixpanel.track("WEB_RUN_ROOM", { workout: workout.id, fromQR });
-
-      runInAction(() => {
-        this.pipeline = [];
-        for (let set of workout.program.sets) {
-          for (let repeat = 0; repeat < set.repeats; repeat++) {
-            this.pipeline.push(...set.exercises.map((ex) => ({ ...ex })));
-          }
+      this.pipeline = [];
+      for (let set of workout.program.sets) {
+        for (let repeat = 0; repeat < set.repeats; repeat++) {
+          this.pipeline.push(...set.exercises.map((ex) => ({ ...ex })));
         }
+      }
 
-        this.workout = workout;
-        this.state = WorkoutState.Running;
-        this.worker = new WorkoutOndevice(this);
+      const completed = this.pipeline.slice(0, workout.exercises_num);
+      this.completedActionsCount = completed.reduce((acc, a) => acc + a.count, 0);
+      this.frameId = workout.frame_id;
+      this.workout = workout;
 
-        this._totalTimer = setInterval(() => {
-          runInAction(() => (this.totalTime += 1));
-        }, 1000) as any;
-      });
+      yield this.worker.initialize();
+      this.state = WorkoutState.Running;
+
+      this._totalTimer = setInterval(() => {
+        runInAction(() => (this.totalTime += 1));
+      }, 1000) as any;
     } catch (e) {
       console.log(e);
       mixpanel.track("WEB_ERROR");
-      runInAction(() => {
-        this.state = WorkoutState.Error;
-        this.error = initializeError;
-      });
+      this.state = WorkoutState.Error;
+      this.error = initializeError;
     }
   }
 
@@ -131,32 +136,74 @@ export class WorkoutRoom {
     return this.exercises[this.current.label] ?? null;
   }
 
-  processFrame = (skelet: SkeletData, width: number, height: number) => {
-    if (this.isBlocked) return;
-    this.worker?.sendFrame(skelet, width, height);
-  };
+  private prevTotalTimeForBatch = 0;
+  private timeWithoutCompletedAction = 0;
 
-  onPhoto = (frame: number, photo: Blob) => {
-    if (this.workout == null) return;
-    if (this.isSavePhotos == false) return;
-    this.api.uploadPhoto(this.workout.id, frame, photo);
-  };
+  *processFrame(skelet: SkeletData, width: number, height: number) {
+    if (this.current == null || this.workout == null || this.worker == null) return;
+    if (this.exerciseReplacing || this.isBlocked) return;
+    if (this.state !== WorkoutState.Running) return;
 
-  private _highlightSkeletTimer?: NodeJS.Timeout;
-  async onDidCompleteExercise() {
-    if (this.workout == null || this.current == null) return;
+    // Initialize time for first batch
+    if (this.frameId === this.workout.frame_id) {
+      this.prevTotalTimeForBatch = Date.now();
+      this.timeWithoutCompletedAction = Date.now();
+    }
 
+    const label = this.current.label;
+    const isRecognized = yield this.worker.sendFrame(skelet, width, height);
+    this.completedFrames.push(skelet);
+    this.frameId += 1;
+
+    // Show exercise replace if user dont complete action 1 minute
+    if (Date.now() - this.timeWithoutCompletedAction > 60_000 && !this.exerciseReplacing) {
+      this.showReplaceButton = true;
+    }
+
+    // Every 80 frames we need send proof of workout
+    if (this.completedFrames.length > 80) {
+      console.log(Date.now(), this.prevTotalTimeForBatch);
+      const batch: WorkoutBatch = {
+        total_time: Math.round((Date.now() - this.prevTotalTimeForBatch) / 1000), // diff time from prev batch
+        frames: this.completedFrames,
+        exercises: this.completedExercises,
+        frame: { width, height, horizontal: true },
+      };
+
+      batch.proof = crypto
+        .createHash("sha256")
+        .update(JSON.stringify(batch) + this.api.jwt)
+        .digest("base64");
+
+      this.completedFrames = [];
+      this.completedExercises = [];
+      this.prevTotalTimeForBatch = Date.now();
+      this.addBatch(batch);
+    }
+
+    if (!isRecognized) return;
+
+    // Highlight skeleton for every action
     this.highlightSkelet = true;
+    clearTimeout(this._highlightSkeletTimer);
+    this._highlightSkeletTimer = +setTimeout(() => {
+      runInAction(() => (this.highlightSkelet = false));
+    }, 1000);
+
     this.completedActionsCount += 1;
+    this.completedExercises.push({ frame_id: this.frameId, label });
+    this.timeWithoutCompletedAction = Date.now();
+
+    mixpanel.track("WEB_СOMPLETE_EXERCISE", { workout: this.workout.id, progress: this.progress });
+
+    // Play complete sound every five actions
     if (this.completedActionsCount % 5 === 0) {
       this.audio.volume = 0.6;
       this.audio.play();
     }
 
-    mixpanel.track("WEB_СOMPLETE_EXERCISE", { workout: this.workout.id, progress: this.progress });
+    // Next exercise if actions equal maximum of current exercise
     if (this.current && this.actionsLeftForCurrentExercise === this.current.count) {
-      this.isBlocked = true;
-      this.state = WorkoutState.Hint;
       mixpanel.track("WEB_NEXT_EXERCISE", {
         workout: this.workout.id,
         exercise: this.current.label,
@@ -164,61 +211,83 @@ export class WorkoutRoom {
         position: this.position,
       });
 
-      setTimeout(() => {
-        this.isBlocked = false;
-      }, 1000);
+      // Block recognize for false positive recognizing
+      setTimeout(() => (this.isBlocked = false), 1000);
+      this.isBlocked = true;
     }
 
+    // Progress 100% = complete workout!
     if (this.progress === 1) {
-      this.state = WorkoutState.Complete;
-      mixpanel.track("WEB_WORKOUT_COMPLETE");
+      this.onDidComplete();
     }
-
-    clearTimeout(this._highlightSkeletTimer);
-    this._highlightSkeletTimer = setTimeout(() => {
-      runInAction(() => (this.highlightSkelet = false));
-    }, 1000);
   }
 
-  showReplaceButtonWithDelay() {
-    setTimeout(() => {
-      runInAction(() => {
-        this.showReplaceButton = true;
-      });
-    }, 20000);
-  }
+  onPhoto = (frame: number, photo: Blob) => {
+    if (this.workout == null) return;
+    if (this.isSavePhotos == false) return;
+    this.api.uploadPhoto(this.workout.id, frame, photo);
+  };
 
-  replaceExercise() {
-    if (!this.showReplaceButton) return;
-    this.worker?.replaceExercise();
+  async replaceExercise() {
+    if (!this.showReplaceButton || this.exerciseReplacing) return;
     this.showReplaceButton = false;
-    this.showReplaceButtonWithDelay();
+    this.exerciseReplacing = true;
+
+    await this.batchesQueue.enqueue(async () => {
+      const { exercise, count } = await this.api.replaceExercise();
+      runInAction(() => {
+        this.exerciseReplacing = false;
+        this.timeWithoutCompletedAction = Date.now();
+        this.pipeline[this.position] = { label: exercise, count };
+        this.completedActionsCount = this.pipeline.slice(0, this.position).reduce((a, b) => a + b.count, 0);
+        mixpanel.track("WEB_REPLACE_EXERCISE", { workout: this.workout?.id, exercise, count, position: this.position });
+      });
+    });
   }
 
-  onDidReplaceExercise(wrk: WorkoutWorker, exercise: string, count: number, position: number): void {
-    mixpanel.track("WEB_REPLACE_EXERCISE", { workout: wrk.workoutId, exercise, count, position });
+  private batches: WorkoutBatch[] = [];
+  async addBatch(batch: WorkoutBatch) {
+    if (this.state !== WorkoutState.Running) return;
+    this.batches.push(batch);
+    console.log(batch);
 
-    this.pipeline[position] = { label: exercise, count };
-    this.completedActionsCount = this.pipeline.slice(0, this.position).reduce((a, b) => a + b.count, 0);
-    this.state = WorkoutState.Hint;
-  }
-
-  onDidDisconnect(wrk: WorkoutWorker, status: WorkoutDisconnectStatus) {
-    mixpanel.track("WEB_DISCONNECT", { workout: wrk.workoutId, status });
-    clearInterval(this._totalTimer);
-
-    if (status === WorkoutDisconnectStatus.SuccessWorkout) {
-      this.state = WorkoutState.Complete;
-    } else {
-      this.state = WorkoutState.Error;
-      this.error = errorMessages[status] || {
-        title: `Произошла неизвестная ошибка: ${status}`,
-        description: "Попробуйте позже, мы скоро все исправим!",
+    await this.batchesQueue.enqueue(async () => {
+      if (this.state !== WorkoutState.Running) return;
+      const sendBatch = async (attempts = 0) => {
+        if (attempts >= 4) return this.onDidError();
+        await this.api.batchWorkout(batch).catch(async () => {
+          await wait(3000);
+          await sendBatch(attempts + 1);
+        });
       };
-    }
+
+      await sendBatch();
+    });
   }
 
-  onDidStart(): void {
-    this.showReplaceButtonWithDelay();
+  async onDidComplete() {
+    await this.batchesQueue.enqueue(async () => {
+      const tryStop = async (attempts = 0) => {
+        if (attempts >= 4) return this.onDidError();
+        await this.api.stopWorkout().catch(async () => {
+          await wait(3000);
+          await tryStop(attempts + 1);
+        });
+      };
+
+      await tryStop();
+    });
+
+    this.state = WorkoutState.Complete;
+    mixpanel.track("WEB_WORKOUT_COMPLETE");
+  }
+
+  onDidError() {
+    clearInterval(this._totalTimer);
+    mixpanel.track("WER_ERROR", { workout: this.workout?.id });
+    this.error = { title: `Нет соединения c интернетом`, description: "Не удалось сохранить ваш прогресс, проверьте ваш интернет" };
+    this.state = WorkoutState.Error;
+    this.batchesQueue.clear();
+    this.batches = [];
   }
 }

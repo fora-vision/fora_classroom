@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
 import mixpanel from "mixpanel-browser";
 import ReactDOM from "react-dom";
@@ -8,29 +8,16 @@ mixpanel.init("063e9838740260bebb040a86ddca9f83");
 // @ts-ignore
 import logoSrc from "./assets/logo.png";
 import Instructions from "./views/Instructions";
-import { formatTime, mobileCheck } from "./helpers";
-import { WorkoutRoom } from "./WorkoutStore";
-import { PoseCamera } from "./PoseCamera";
-import { WorkoutState } from "./types";
+import ExerciseHint from "./views/ExerciseHint";
 import * as S from "./views/styled";
+
+import { formatTime, mobileCheck } from "./helpers";
+import { PoseCamera } from "./recognizer/PoseCamera";
+import { WorkoutRoom } from "./WorkoutStore";
+import { WorkoutState } from "./types";
 
 const jwt = new URLSearchParams(window.location.search).get("w") ?? "";
 const store = new WorkoutRoom();
-
-const ExerciseHint = ({ frames, per }) => {
-  const [frame, setFrame] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setFrame((f) => (f + 1) % frames.length), per);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <S.ExerciseHint>
-      <img src={frames[frame]} />
-    </S.ExerciseHint>
-  );
-};
 
 const App = observer(() => {
   const [isVideo, setVideo] = useState(false);
@@ -62,7 +49,7 @@ const App = observer(() => {
         isSavePhotos={store.isSavePhotos}
         style={{ opacity: hideCamera ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
-        onFrame={store.processFrame}
+        onFrame={store.processFrame.bind(store)}
         onLoaded={handleLoaded}
         onPhoto={store.onPhoto}
         onFps={setFps}
@@ -84,12 +71,14 @@ const App = observer(() => {
             </S.Badges>
 
             <S.HelpSide>
-              {store.state === WorkoutState.Hint && <ExerciseHint per={2000} frames={[ex?.image_down.replace(".png", ".svg"), ex?.image_up.replace(".png", ".svg")]} />}
+              {store.state === WorkoutState.Running && ex != null && (
+                <ExerciseHint per={2000} frames={[ex.image_down.replace(".png", ".svg"), ex?.image_up.replace(".png", ".svg")]} />
+              )}
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 {store.showReplaceButton && (
                   <S.HintButton onClick={() => store.replaceExercise()} style={{ marginRight: 16 }}>
-                    Заменить упражнение
+                    {store.exerciseReplacing ? "Загрузка..." : "Заменить упражнение"}
                   </S.HintButton>
                 )}
 

@@ -1,9 +1,13 @@
+export const initializeError = {
+  title: "Не получилось запустить тренировку!",
+  description: "Такой тренировки не существует или отсутствует соединение с сервером",
+};
+
 export enum WorkoutState {
   Invite,
   Loading,
   InitializeFailed,
   Running,
-  Hint,
   Error,
   Complete,
 }
@@ -14,6 +18,14 @@ export type SkeletData = {
   z: number;
   p: number;
 }[];
+
+export interface WorkoutBatch {
+  total_time: number;
+  frame: { height: number; width: number; horizontal: boolean };
+  exercises: { frame_id: number; label: string }[];
+  frames: SkeletData[];
+  proof?: string;
+}
 
 export interface Exercise {
   label: string;
@@ -44,16 +56,13 @@ export interface WorkoutModel {
   calories: number;
   name: string;
   status: WorkoutStatus;
+  exercises_num: number;
+  frame_id: number;
   body_part: string;
   save_photos: boolean;
   program: {
     sets: WorkoutSet[];
   };
-}
-
-export interface StartWorkoutPoint {
-  taskId: number;
-  exercises: number;
 }
 
 export interface RoomResponse {

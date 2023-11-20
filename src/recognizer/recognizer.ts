@@ -2,25 +2,21 @@ import type { PyodideInterface, loadPyodide } from "pyodide";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import * as tf from "@tensorflow/tfjs";
 
-import { Exercise, SkeletData } from "../types";
 import { WorkoutRoom } from "../WorkoutStore";
-
-import Config from "./config.json"; // @ts-ignore
-import pythonPredictor from "bundle-text:./predictor.py";
-import Counter from "./counter";
+import { SkeletData } from "../types";
+import Counter from "./Counter";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 
-export class WorkoutOndevice {
+export class RecognizerOndevice {
   private isStarted = false;
   private isInitialized = false;
   private models: Record<string, Promise<{ hand: Model; leg: Model }>> = {};
-  private counter = new Counter(10);
+  private counter = new Counter(10, this);
   private py?: PyodideInterface;
 
-  constructor(readonly workout: WorkoutRoom) {
-    this.initialize();
-  }
+  public config: Record<string, any> | null = null;
+  constructor(readonly workout: WorkoutRoom) {}
 
   loadModel = async (exercise: string) => {
     return {
@@ -30,6 +26,9 @@ export class WorkoutOndevice {
   };
 
   async initialize() {
+    this.config = await (await fetch("/config.json")).json();
+    const pythonPredictor = await (await fetch("/predictor.py")).text();
+
     // @ts-ignore
     this.py = await loadPyodide();
     await this.py.loadPackage("numpy");
@@ -38,7 +37,7 @@ export class WorkoutOndevice {
     this.py.FS.writeFile("/poses_graph.pickle", await loadFile("/poses_graph.pickle"));
     this.py.FS.writeFile("/classes.pickle", await loadFile("/classes.pickle"));
 
-    this.py.runPython(`Config = ${JSON.stringify(Config)}`);
+    this.py.runPython(`Config = ${JSON.stringify(this.config)}`);
     this.py.globals.set("js_predict", async (exercise, part, batch) => {
       if (this.models[exercise] == null) {
         this.models[exercise] = this.loadModel(exercise);
@@ -65,15 +64,14 @@ export class WorkoutOndevice {
   }
 
   async sendFrame(points: SkeletData, width: number, height: number) {
-    if (!this.workout.current) return;
-    if (!this.isInitialized) return;
+    if (!this.workout.current) return false;
+    if (!this.isInitialized) return false;
 
     const ex = this.workout.current.label;
     const perform = `await predict_frames('${ex}', ${JSON.stringify([points])})`;
     const result = await this.py?.runPythonAsync(perform);
     const id = result.toJs()[0][0];
 
-    const isRecognized = ex === this.counter.step(id);
-    if (isRecognized) this.workout.onDidCompleteExercise();
+    return ex === this.counter.step(id);
   }
 }

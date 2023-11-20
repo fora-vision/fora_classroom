@@ -1,3 +1,5 @@
+export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const countFPS = (() => {
   let lastLoop = new Date().getMilliseconds();
   let count = 1;
@@ -57,3 +59,52 @@ export const formatTime = (time: number) => {
   const fs = ss < 10 ? "0" + ss : ss;
   return `${fm}:${fs}`;
 };
+
+export class Queue {
+  _items: any[] = [];
+  enqueue(item: any) {
+    this._items.push(item);
+  }
+
+  dequeue() {
+    return this._items.shift();
+  }
+
+  clear() {
+    this._items = [];
+  }
+
+  get size() {
+    return this._items.length;
+  }
+}
+
+export class AutoQueue extends Queue {
+  _pendingPromise = false;
+  enqueue<T>(action: () => Promise<T>): Promise<T> {
+    return new Promise(async (resolve, reject) => {
+      super.enqueue({ action, resolve, reject });
+      void this.dequeue();
+    });
+  }
+
+  async dequeue() {
+    if (this._pendingPromise) return false;
+    let item = super.dequeue();
+    if (!item) return false;
+
+    try {
+      this._pendingPromise = true;
+      let payload = await item.action(this);
+      this._pendingPromise = false;
+      item.resolve(payload);
+    } catch (e) {
+      this._pendingPromise = false;
+      item.reject(e);
+    } finally {
+      void this.dequeue();
+    }
+
+    return true;
+  }
+}
