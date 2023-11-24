@@ -8,6 +8,8 @@ import Counter from "./Counter";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 
+const MEDIA = "https://storage.fora.vision/models/0.1.0";
+
 export class RecognizerOndevice {
   private isStarted = false;
   private isInitialized = false;
@@ -20,22 +22,22 @@ export class RecognizerOndevice {
 
   loadModel = async (exercise: string) => {
     return {
-      hand: await loadGraphModel(`/models/${exercise}_hand/model.json`),
-      leg: await loadGraphModel(`/models/${exercise}_leg/model.json`),
+      hand: await loadGraphModel(`${MEDIA}/models/${exercise}_hand/model.json`),
+      leg: await loadGraphModel(`${MEDIA}/models/${exercise}_leg/model.json`),
     };
   };
 
   async initialize() {
-    this.config = await (await fetch("/config.json")).json();
-    const pythonPredictor = await (await fetch("/predictor.py")).text();
+    this.config = await (await fetch(`${MEDIA}/config.json`)).json();
+    const pythonPredictor = await (await fetch(`${MEDIA}/predictor.py`)).text();
 
     // @ts-ignore
     this.py = await loadPyodide();
     await this.py.loadPackage("numpy");
 
     const loadFile = async (url: string) => Uint8Array.from((await (await fetch(url)).arrayBuffer()) as any);
-    this.py.FS.writeFile("/poses_graph.pickle", await loadFile("/poses_graph.pickle"));
-    this.py.FS.writeFile("/classes.pickle", await loadFile("/classes.pickle"));
+    this.py.FS.writeFile("/poses_graph.pickle", await loadFile(`${MEDIA}/poses_graph.pickle`));
+    this.py.FS.writeFile("/classes.pickle", await loadFile(`${MEDIA}/classes.pickle`));
 
     this.py.runPython(`Config = ${JSON.stringify(this.config)}`);
     this.py.globals.set("js_predict", async (exercise, part, batch) => {

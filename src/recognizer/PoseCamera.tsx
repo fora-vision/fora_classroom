@@ -34,7 +34,7 @@ interface Props {
   style: any;
 }
 
-const flipLandmarks = (poseLandmarks) => {
+const flipLandmarks = (poseLandmarks: SkeletData) => {
   const points = poseLandmarks.map((p) => ({
     x: 1 - p.x,
     y: p.y,
@@ -106,9 +106,12 @@ export const PoseCamera: FC<Props> = (props) => {
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
+      console.log(results.poseLandmarks);
       if (results.poseLandmarks) {
         const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }));
         const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }));
+        console.log({ landmarksRight, landmarks });
+
         for (let i = 0; i < 11; i++) {
           landmarksRight[i].visibility = 0;
           landmarks[i].visibility = 0;
