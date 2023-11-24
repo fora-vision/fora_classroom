@@ -57,6 +57,7 @@ export interface WorkoutModel {
   name: string;
   status: WorkoutStatus;
   exercises_num: number;
+  model_version: string;
   frame_id: number;
   body_part: string;
   save_photos: boolean;

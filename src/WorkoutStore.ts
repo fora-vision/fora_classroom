@@ -161,26 +161,7 @@ export class WorkoutRoom {
     }
 
     // Every 80 frames we need send proof of workout
-    if (this.completedFrames.length > 80) {
-      console.log(Date.now(), this.prevTotalTimeForBatch);
-      const batch: WorkoutBatch = {
-        total_time: Math.round((Date.now() - this.prevTotalTimeForBatch) / 1000), // diff time from prev batch
-        frames: this.completedFrames,
-        exercises: this.completedExercises,
-        frame: { width, height, horizontal: true },
-      };
-
-      batch.proof = crypto
-        .createHash("sha256")
-        .update(JSON.stringify(batch) + this.api.jwt)
-        .digest("base64");
-
-      this.completedFrames = [];
-      this.completedExercises = [];
-      this.prevTotalTimeForBatch = Date.now();
-      this.addBatch(batch);
-    }
-
+    if (this.completedFrames.length > 80) this.addBatch();
     if (!isRecognized) return;
 
     // Highlight skeleton for every action
@@ -246,8 +227,23 @@ export class WorkoutRoom {
   }
 
   private batches: WorkoutBatch[] = [];
-  async addBatch(batch: WorkoutBatch) {
+  async addBatch() {
     if (this.state !== WorkoutState.Running) return;
+    const batch: WorkoutBatch = {
+      total_time: Math.round((Date.now() - this.prevTotalTimeForBatch) / 1000), // diff time from prev batch
+      frame: { width: this.worker.width, height: this.worker.height, horizontal: true },
+      exercises: this.completedExercises,
+      frames: this.completedFrames,
+    };
+
+    batch.proof = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(batch) + this.api.jwt)
+      .digest("base64");
+
+    this.completedFrames = [];
+    this.completedExercises = [];
+    this.prevTotalTimeForBatch = Date.now();
     this.batches.push(batch);
     console.log(batch);
 
@@ -266,6 +262,7 @@ export class WorkoutRoom {
   }
 
   async onDidComplete() {
+    await this.addBatch(); // send final batch
     await this.batchesQueue.enqueue(async () => {
       const tryStop = async (attempts = 0) => {
         if (attempts >= 4) return this.onDidError();

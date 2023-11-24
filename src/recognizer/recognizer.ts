@@ -8,8 +8,6 @@ import Counter from "./Counter";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 
-const MEDIA = "https://storage.fora.vision/models/0.1.0";
-
 export class RecognizerOndevice {
   private isStarted = false;
   private isInitialized = false;
@@ -22,22 +20,34 @@ export class RecognizerOndevice {
 
   loadModel = async (exercise: string) => {
     return {
-      hand: await loadGraphModel(`${MEDIA}/models/${exercise}_hand/model.json`),
-      leg: await loadGraphModel(`${MEDIA}/models/${exercise}_leg/model.json`),
+      hand: await loadGraphModel(`${this.media}/models/${exercise}_hand/model.json`),
+      leg: await loadGraphModel(`${this.media}/models/${exercise}_leg/model.json`),
     };
   };
 
+  get width() {
+    return this.config?.image_width ?? 0;
+  }
+
+  get height() {
+    return this.config?.image_height ?? 0;
+  }
+
+  get media() {
+    return `https://storage.fora.vision/models/${this.workout.workout?.model_version}`;
+  }
+
   async initialize() {
-    this.config = await (await fetch(`${MEDIA}/config.json`)).json();
-    const pythonPredictor = await (await fetch(`${MEDIA}/predictor.py`)).text();
+    this.config = await (await fetch(`${this.media}/config.json`)).json();
+    const pythonPredictor = await (await fetch(`${this.media}/predictor.py`)).text();
 
     // @ts-ignore
     this.py = await loadPyodide();
     await this.py.loadPackage("numpy");
 
     const loadFile = async (url: string) => Uint8Array.from((await (await fetch(url)).arrayBuffer()) as any);
-    this.py.FS.writeFile("/poses_graph.pickle", await loadFile(`${MEDIA}/poses_graph.pickle`));
-    this.py.FS.writeFile("/classes.pickle", await loadFile(`${MEDIA}/classes.pickle`));
+    this.py.FS.writeFile("/poses_graph.pickle", await loadFile(`${this.media}/poses_graph.pickle`));
+    this.py.FS.writeFile("/classes.pickle", await loadFile(`${this.media}/classes.pickle`));
 
     this.py.runPython(`Config = ${JSON.stringify(this.config)}`);
     this.py.globals.set("js_predict", async (exercise, part, batch) => {
@@ -68,6 +78,13 @@ export class RecognizerOndevice {
   async sendFrame(points: SkeletData, width: number, height: number) {
     if (!this.workout.current) return false;
     if (!this.isInitialized) return false;
+    if (!this.config) return false;
+
+    if (this.config.image_width !== width || this.config.image_height !== height) {
+      this.config.image_height = height;
+      this.config.image_width = width;
+      this.py?.runPython(`Config = ${JSON.stringify(this.config)}`);
+    }
 
     const ex = this.workout.current.label;
     const perform = `await predict_frames('${ex}', ${JSON.stringify([points])})`;
