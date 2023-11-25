@@ -38,7 +38,12 @@ export interface Exercise {
   side: "left" | "front" | "right";
 }
 
-export enum WorkoutStatus {}
+export enum WorkoutStatus {
+  UPCOMING = -1,
+  DONE = 4,
+  BANED = 5,
+  RECOGNIZING = 8,
+}
 
 export interface WorkoutSet {
   name: string;

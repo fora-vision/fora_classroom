@@ -1,5 +1,11 @@
 import { RoomResponse, Exercise, WorkoutBatch } from "./types";
 
+class ServerError extends Error {
+  constructor(readonly code: number) {
+    super();
+  }
+}
+
 export class WorkoutApi {
   public readonly endpoint = "https://dev.fora.vision";
   constructor(public readonly jwt = "") {}
@@ -12,7 +18,7 @@ export class WorkoutApi {
     });
 
     if (!res.ok) {
-      throw Error(res.statusText);
+      throw new ServerError(res.status);
     }
 
     return await res.json();
@@ -51,7 +57,15 @@ export class WorkoutApi {
     });
   }
 
-  async loadRoom(jwt: string): Promise<RoomResponse> {
-    return await this.fetch(`api/v2/workout/room?w=${jwt}`);
+  async loadRoom(jwt: string): Promise<RoomResponse | { error: "locked" }> {
+    try {
+      return await this.fetch(`api/v2/workout/room?w=${jwt}`);
+    } catch (e) {
+      if (e instanceof ServerError) {
+        if (e.code === 423) return { error: "locked" };
+      }
+
+      throw e;
+    }
   }
 }

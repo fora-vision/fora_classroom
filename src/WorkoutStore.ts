@@ -2,7 +2,7 @@ import { action, computed, flow, makeObservable, observable, runInAction } from 
 import mixpanel from "mixpanel-browser";
 import crypto from "crypto";
 
-import { Exercise, SkeletData, WorkoutBatch, WorkoutModel, WorkoutState, initializeError } from "./types";
+import { Exercise, SkeletData, WorkoutBatch, WorkoutModel, WorkoutState, WorkoutStatus, initializeError } from "./types";
 import { RecognizerOndevice } from "./recognizer/Recognizer";
 import { AutoQueue, wait } from "./helpers";
 import { WorkoutApi } from "./api";
@@ -67,7 +67,40 @@ export class WorkoutRoom {
   *initialize(jwt: string, fromQR = false) {
     try {
       this.api = new WorkoutApi(jwt);
-      const { workout, user_id } = yield this.api.loadRoom(jwt);
+      const { workout, user_id, error } = yield this.api.loadRoom(jwt);
+
+      if (error === "locked") {
+        this.state = WorkoutState.Error;
+        this.error = {
+          title: "Закончились минуты",
+          description: "Обратитесь к вашему тренеру, чтобы он исправил эту ошибку",
+        };
+        return;
+      }
+
+      if (workout.status === WorkoutStatus.DONE) {
+        this.state = WorkoutState.Complete;
+        return;
+      }
+
+      if (workout.status === WorkoutStatus.BANED) {
+        this.state = WorkoutState.Error;
+        this.error = {
+          title: "Тренировка заблокирована",
+          description: "Наша система заподозрила нечестное выполнение тренировки, если это ошибка, пожалуйста, напишите нам на help@fora.vision",
+        };
+        return;
+      }
+
+      if (workout.status === WorkoutStatus.RECOGNIZING) {
+        this.state = WorkoutState.Error;
+        this.error = {
+          title: "Проверяем тренировку",
+          description: "Тренировка была завершена, мы проверяем, что все было выполнено правильно :)",
+        };
+        return;
+      }
+
       this.exercises = yield this.api.getExercises();
 
       mixpanel.identify(user_id.toString());

@@ -103,15 +103,15 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
 
       {store.state === WorkoutState.Complete && (
         <S.Overlay style={{ flexDirection: "column" }}>
-          <h1 style={{ color: "#fff" }}>Тренировка завершена!</h1>
-          <p style={{ color: "#fff" }}>Можете закрыть страницу, ваш результат сохранен</p>
+          <h1 style={{ color: "#fff", textAlign: "center" }}>Тренировка завершена!</h1>
+          <p style={{ color: "#fff", textAlign: "center" }}>Можете закрыть страницу, ваш результат сохранен</p>
         </S.Overlay>
       )}
 
       {store.state === WorkoutState.Error && (
         <S.Overlay style={{ flexDirection: "column" }}>
-          <h1 style={{ color: "#fff" }}>{store.error.title}</h1>
-          <p style={{ color: "#fff" }}>{store.error.description}</p>
+          <h1 style={{ color: "#fff", textAlign: "center" }}>{store.error.title}</h1>
+          <p style={{ color: "#fff", textAlign: "center" }}>{store.error.description}</p>
         </S.Overlay>
       )}
 
