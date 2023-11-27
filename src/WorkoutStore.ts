@@ -4,6 +4,7 @@ import crypto from "crypto";
 
 import { Exercise, SkeletData, WorkoutBatch, WorkoutModel, WorkoutState, WorkoutStatus, initializeError } from "./types";
 import { RecognizerOndevice } from "./recognizer/Recognizer";
+import { framesStats, uploadStats } from "./stats";
 import { AutoQueue, wait } from "./helpers";
 import { WorkoutApi } from "./api";
 
@@ -171,11 +172,15 @@ export class WorkoutRoom {
 
   private prevTotalTimeForBatch = 0;
   private timeWithoutCompletedAction = 0;
+  private frameCount = 0;
 
   *processFrame(skelet: SkeletData, width: number, height: number) {
     if (this.current == null || this.workout == null || this.worker == null) return;
     if (this.exerciseReplacing || this.isBlocked) return;
     if (this.state !== WorkoutState.Running) return;
+
+    this.frameCount += 1;
+    framesStats.update(this.frameCount, this.frameCount * 2);
 
     // Initialize time for first batch
     if (this.frameId === this.workout.frame_id) {
@@ -259,7 +264,7 @@ export class WorkoutRoom {
     });
   }
 
-  private batches: WorkoutBatch[] = [];
+  private totalKb = 0;
   async addBatch() {
     if (this.state !== WorkoutState.Running) return;
     const batch: WorkoutBatch = {
@@ -277,8 +282,6 @@ export class WorkoutRoom {
     this.completedFrames = [];
     this.completedExercises = [];
     this.prevTotalTimeForBatch = Date.now();
-    this.batches.push(batch);
-    console.log(batch);
 
     await this.batchesQueue.enqueue(async () => {
       if (this.state !== WorkoutState.Running) return;
@@ -288,6 +291,10 @@ export class WorkoutRoom {
           await wait(3000);
           await sendBatch(attempts + 1);
         });
+
+        const size = new TextEncoder().encode(JSON.stringify(batch)).length;
+        this.totalKb += size / 1024;
+        uploadStats.update(this.totalKb, this.totalKb * 2);
       };
 
       await sendBatch();
@@ -318,6 +325,5 @@ export class WorkoutRoom {
     this.error = { title: `Нет соединения c интернетом`, description: "Не удалось сохранить ваш прогресс, проверьте ваш интернет" };
     this.state = WorkoutState.Error;
     this.batchesQueue.clear();
-    this.batches = [];
   }
 }

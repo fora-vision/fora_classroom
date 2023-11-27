@@ -3,6 +3,7 @@ import React, { FC, useEffect, useState } from "react";
 import { countFPS, generateImage } from "../helpers";
 import { SkeletData } from "../types";
 import * as S from "../views/styled";
+import stats from "../stats";
 
 const initializePose = () => {
   const pose = new Pose({
@@ -102,16 +103,15 @@ export const PoseCamera: FC<Props> = (props) => {
     const fps = 1000 / 12; // Send max 12 fps
 
     const onResults = (results) => {
+      stats.begin();
       onFps(countFPS());
+
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-      console.log(results.poseLandmarks);
       if (results.poseLandmarks) {
         const landmarksRight = results.poseLandmarks.map((p, i) => ({ ...p, visibility: i % 2 ? 1 : 0 }));
         const landmarks = results.poseLandmarks.map((p) => ({ ...p, visibility: 1 }));
-        console.log({ landmarksRight, landmarks });
-
         for (let i = 0; i < 11; i++) {
           landmarksRight[i].visibility = 0;
           landmarks[i].visibility = 0;
@@ -148,6 +148,8 @@ export const PoseCamera: FC<Props> = (props) => {
           });
         }
       }
+
+      stats.end();
     };
 
     pose.onResults(onResults);

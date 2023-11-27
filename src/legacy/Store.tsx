@@ -4,6 +4,7 @@ import mixpanel from "mixpanel-browser";
 import { WorkoutApi } from "../api";
 import { Exercise, SkeletData, WorkoutModel } from "../types";
 import { WorkoutDisconnectStatus, WorkoutWorker, WorkoutWorkerDelegate } from "./Worker";
+import { framesStats } from "../stats";
 
 export enum WorkoutState {
   Invite,
@@ -91,12 +92,17 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.audio.src = soundUrl.toString();
   }
 
+  frameId = 0;
   async initialize(jwt: string, fromQR = false) {
     try {
       this.api = new WorkoutApi(jwt);
-      const { workout, user_id } = await this.api.loadRoom(jwt);
-      runInAction(() => (this.workout = workout));
+      const room = await this.api.loadRoom(jwt);
+      if (!("workout" in room)) throw Error();
 
+      const { workout, user_id } = room;
+      this.frameId = workout.frame_id;
+
+      runInAction(() => (this.workout = workout));
       mixpanel.identify(user_id.toString());
       mixpanel.track("WEB_RUN_ROOM", { workout: workout.id, fromQR });
 
@@ -136,8 +142,12 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     return null;
   }
 
+  frameCount = 0;
   processFrame = (skelet: SkeletData, width: number, height: number) => {
-    this.worker?.sendFrame(skelet, width, height);
+    this.frameId += 1;
+    this.frameCount += 1;
+    framesStats.update(this.frameCount, this.frameCount * 2);
+    this.worker?.sendFrame(skelet, width, height, this.frameId);
   };
 
   onPhoto = (frame: number, photo: Blob) => {

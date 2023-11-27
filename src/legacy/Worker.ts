@@ -1,3 +1,4 @@
+import { loadStats, predictStats, uploadStats } from "../stats";
 import { SkeletData, RoomResponse, Exercise } from "../types";
 
 export enum WorkoutDisconnectStatus {
@@ -23,6 +24,9 @@ export class WorkoutWorker {
 
   public delegate?: WorkoutWorkerDelegate;
 
+  private totalLoad = 0;
+  private totalUpload = 0;
+
   constructor(readonly workoutId: number) {
     this.socket = new WebSocket(`${this.endpoint}/api/v2/workout/ws/recognizer/${workoutId}`);
 
@@ -44,10 +48,14 @@ export class WorkoutWorker {
     };
 
     this.socket.onmessage = (event) => {
-      const action = JSON.parse(event.data);
+      const size = new TextEncoder().encode(event.data).length;
+      this.totalLoad += size / 1024;
+      loadStats.update(this.totalLoad, this.totalLoad * 2);
 
+      const action = JSON.parse(event.data);
       if (action.type === "NEW_REPEAT_FOUND") {
         this.delegate?.onDidCompleteExercise(this);
+        predictStats.update(performance.now() - this.frames[action.frame_id], 200);
       }
 
       if (action.type === "NEXT_EXERCISE") {
@@ -62,18 +70,31 @@ export class WorkoutWorker {
 
   replaceExercise() {
     if (!this.isStarted) return;
-    this.socket.send(JSON.stringify({ type: "REPLACE_EXERCISE" }));
+
+    const data = JSON.stringify({ type: "REPLACE_EXERCISE" });
+    const size = new TextEncoder().encode(data).length;
+    this.totalUpload += size / 1024;
+
+    uploadStats.update(this.totalUpload, this.totalUpload * 2);
+    this.socket.send(data);
   }
 
-  sendFrame(points: SkeletData, width: number, height: number) {
+  private frames: Record<number, number> = {};
+  sendFrame(points: SkeletData, width: number, height: number, id: number) {
     if (!this.isStarted) return;
-    this.socket.send(
-      JSON.stringify({
-        type: "FRAME",
-        data: points,
-        width,
-        height,
-      })
-    );
+
+    const data = JSON.stringify({
+      type: "FRAME",
+      data: points,
+      width,
+      height,
+    });
+
+    const size = new TextEncoder().encode(data).length;
+    this.totalUpload += size / 1024;
+
+    uploadStats.update(this.totalUpload, this.totalUpload * 2);
+    this.socket.send(data);
+    this.frames[id] = performance.now();
   }
 }

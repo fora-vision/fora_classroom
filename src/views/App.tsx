@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
 
 import { formatTime, mobileCheck } from "../helpers";
@@ -10,6 +10,7 @@ import { WorkoutState } from "../types";
 import logoSrc from "../assets/logo.png";
 import Instructions from "./Instructions";
 import ExerciseHint from "./ExerciseHint";
+import stats, { initStats } from "../stats";
 import * as S from "./styled";
 
 const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
@@ -18,11 +19,14 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
   const [isLoaded, setLoaded] = useState(false);
   const [fps, setFps] = useState(0);
 
+  const initPerf = useRef(performance.now());
+
   const ex = store.currentExerciseDetails;
   const hideCamera = !ex || !isLoaded;
-  const handleLoaded = () => {
-    void store?.initialize(jwt);
+  const handleLoaded = async () => {
     setLoaded(true);
+    await store?.initialize(jwt);
+    initStats.update(performance.now() - initPerf.current);
   };
 
   if (mobileCheck()) {
@@ -93,9 +97,13 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
               Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://fora.vision/tos">условиями пользования</a>
             </S.TextTOS>
 
-            <S.TextTOS style={{ fontWeight: "bold", marginLeft: "auto" }}>Engine {store.workout?.model_version ?? ""}</S.TextTOS>
+            <S.TextTOS onClick={() => (stats.dom.hidden = false)} style={{ fontWeight: "bold", marginLeft: "auto", cursor: "pointer" }}>
+              Metrics
+            </S.TextTOS>
+
+            <S.TextTOS style={{ fontWeight: "bold" }}>Engine {store.workout?.model_version ?? ""}</S.TextTOS>
             <S.TextTOS style={{ fontWeight: "bold" }}>
-              <a href="https://fora.vision">Fora.Vision @2022</a>
+              <a href="https://fora.vision">Fora.Vision @2023</a>
             </S.TextTOS>
           </div>
         </S.Page>

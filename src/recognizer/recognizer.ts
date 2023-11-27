@@ -5,6 +5,7 @@ import * as tf from "@tensorflow/tfjs";
 import { WorkoutRoom } from "../WorkoutStore";
 import { SkeletData } from "../types";
 import Counter from "./Counter";
+import stats, { predictStats } from "../stats";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 
@@ -80,6 +81,7 @@ export class RecognizerOndevice {
     if (!this.isInitialized) return false;
     if (!this.config) return false;
 
+    const perf = performance.now();
     if (this.config.image_width !== width || this.config.image_height !== height) {
       this.config.image_height = height;
       this.config.image_width = width;
@@ -90,6 +92,8 @@ export class RecognizerOndevice {
     const perform = `await predict_frames('${ex}', ${JSON.stringify([points])})`;
     const result = await this.py?.runPythonAsync(perform);
     const id = result.toJs()[0][0];
+
+    predictStats.update(performance.now() - perf, 200);
 
     return ex === this.counter.step(id);
   }

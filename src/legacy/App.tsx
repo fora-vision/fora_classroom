@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
 
 // @ts-ignore
@@ -9,6 +9,7 @@ import { formatTime, mobileCheck } from "../helpers";
 import * as S from "../views/styled";
 import ExerciseHint from "../views/ExerciseHint";
 import Instructions from "../views/Instructions";
+import stats, { initStats } from "../stats";
 
 const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
   const [isVideo, setVideo] = useState(false);
@@ -16,11 +17,13 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
 
   const [isLoaded, setLoaded] = useState(false);
   const [fps, setFps] = useState(0);
+  const initPerf = useRef(performance.now());
 
   const hideCamera = !store.exercise || !isLoaded || store.state === WorkoutState.Invite;
-  const handleLoaded = () => {
-    void store.initialize(jwt);
+  const handleLoaded = async () => {
     setLoaded(true);
+    await store.initialize(jwt);
+    initStats.update(performance.now() - initPerf.current);
   };
 
   if (mobileCheck()) {
@@ -84,12 +87,16 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
             <S.TimelineProgress style={{ width: `${store.progress * 100}%` }} />
             <S.TimelineTotal>{formatTime(store.totalTime)}</S.TimelineTotal>
           </S.Timeline>
-          <div style={{ display: "flex", justifyContent: "space-between " }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
             <S.TextTOS>
               Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://fora.vision/tos">условиями пользования</a>
             </S.TextTOS>
+
+            <S.TextTOS onClick={() => (stats.dom.hidden = false)} style={{ fontWeight: "bold", marginLeft: "auto", cursor: "pointer" }}>
+              Metrics
+            </S.TextTOS>
             <S.TextTOS style={{ fontWeight: "bold" }}>
-              <a href="https://fora.vision">Fora.Vision @2022</a>
+              <a href="https://fora.vision">Fora.Vision @2023</a>
             </S.TextTOS>
           </div>
         </S.Page>
