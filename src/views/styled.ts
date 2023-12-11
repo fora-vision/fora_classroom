@@ -11,6 +11,21 @@ export const Page = styled.div`
   padding: 32px 64px 64px;
 `;
 
+export const Select = styled.select`
+  position: absolute;
+  top: 40px;
+  right: 72px;
+  color: #fff;
+  font-family: Montserrat;
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10pxpx);
+  outline: none;
+  padding: 8px;
+  border-radius: 16px;
+  border-right: 10px solid rgba(0, 0, 0, 0);
+`;
+
 export const TextTOS = styled.p`
   margin: 8px 0 -16px;
   color: #333;

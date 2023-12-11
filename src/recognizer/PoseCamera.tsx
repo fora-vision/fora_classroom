@@ -34,6 +34,7 @@ interface Props {
   onPhoto: (frame: number, photo: Blob) => void;
   highlightSkelet: boolean;
   isSavePhotos: boolean;
+  deviceId: string | null;
   style: any;
 }
 
@@ -56,15 +57,36 @@ const flipLandmarks = (poseLandmarks: SkeletData) => {
 };
 
 export const PoseCamera: FC<Props> = (props) => {
-  const { onFrame, onPhoto, onFps, onLoaded, isSavePhotos, style, highlightSkelet } = props;
+  const { deviceId, onFrame, onPhoto, onFps, onLoaded, isSavePhotos, style, highlightSkelet } = props;
   const [pose] = useState(() => initializePose());
+
+  useEffect(() => {
+    if (deviceId == null) return;
+    const videoElement = document.getElementsByClassName("input_video")[0];
+    let currentStream: MediaStream;
+
+    navigator.mediaDevices.getUserMedia({ video: { deviceId, width: 720, height: 480 } }).then((stream) => {
+      currentStream = stream;
+      videoElement.srcObject = stream;
+      videoElement.onloadedmetadata = function () {
+        console.log("LOAD");
+        videoElement.play();
+      };
+
+      const { width, height } = stream.getVideoTracks()[0].getSettings();
+      videoElement.height = height;
+      videoElement.width = width;
+    });
+
+    return () => {
+      currentStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [deviceId]);
 
   useEffect(() => {
     const videoElement = document.getElementsByClassName("input_video")[0];
     const canvasElement = document.getElementsByClassName("output_canvas")[0] as HTMLCanvasElement;
-    const ctx = canvasElement.getContext("2d");
-    const size = { width: 1280, height: 720 };
-    let isLoaded = false;
+    const size = { height: 480, width: 720 };
 
     const resizeCanvas = () => {
       const aspect = size.height / size.width;
@@ -82,50 +104,21 @@ export const PoseCamera: FC<Props> = (props) => {
       canvasElement.height = height;
     };
 
-    if (DEBUG) {
-      videoElement.src = "https://storage.fora.vision/examples/knees_raising.mp4";
-      videoElement.crossOrigin = "anonymous";
-      videoElement.loop = true;
-      videoElement.playbackRate = 10.0;
+    let isPreccessing = false;
+    async function loop() {
+      resizeCanvas();
+      requestAnimationFrame(loop);
 
-      async function loop() {
-        if (!videoElement.paused && !videoElement.ended) {
-          ctx.drawImage(videoElement, 0, 0, 1280, 720);
-          resizeCanvas();
-          await pose.send({ image: videoElement });
-          requestAnimationFrame(loop);
-        }
+      if (videoElement.paused || videoElement.ended) return;
+
+      if (!isPreccessing) {
+        isPreccessing = true;
+        pose.send({ image: videoElement }).finally(() => (isPreccessing = false));
       }
-
-      document.addEventListener(
-        "click",
-        () => {
-          videoElement.play();
-          loop();
-        },
-        { once: true }
-      );
-
-      if (isLoaded == false) {
-        isLoaded = true;
-        onLoaded();
-      }
-
-      return;
     }
 
-    const camera = new Camera(videoElement, {
-      ...size,
-      onFrame: async () => {
-        resizeCanvas();
-        await pose.send({ image: videoElement });
-        if (isLoaded == false) {
-          isLoaded = true;
-          onLoaded();
-        }
-      },
-    });
-    camera.start();
+    loop();
+    onLoaded();
   }, []);
 
   useEffect(() => {
