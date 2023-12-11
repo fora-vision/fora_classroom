@@ -5,6 +5,8 @@ import { SkeletData } from "../types";
 import * as S from "../views/styled";
 import stats from "../stats";
 
+const DEBUG = false;
+
 const initializePose = () => {
   const pose = new Pose({
     locateFile: (file) => {
@@ -59,7 +61,8 @@ export const PoseCamera: FC<Props> = (props) => {
 
   useEffect(() => {
     const videoElement = document.getElementsByClassName("input_video")[0];
-    const canvasElement = document.getElementsByClassName("output_canvas")[0];
+    const canvasElement = document.getElementsByClassName("output_canvas")[0] as HTMLCanvasElement;
+    const ctx = canvasElement.getContext("2d");
     const size = { width: 1280, height: 720 };
     let isLoaded = false;
 
@@ -78,6 +81,38 @@ export const PoseCamera: FC<Props> = (props) => {
       canvasElement.width = width;
       canvasElement.height = height;
     };
+
+    if (DEBUG) {
+      videoElement.src = "https://storage.fora.vision/examples/knees_raising.mp4";
+      videoElement.crossOrigin = "anonymous";
+      videoElement.loop = true;
+      videoElement.playbackRate = 10.0;
+
+      async function loop() {
+        if (!videoElement.paused && !videoElement.ended) {
+          ctx.drawImage(videoElement, 0, 0, 1280, 720);
+          resizeCanvas();
+          await pose.send({ image: videoElement });
+          requestAnimationFrame(loop);
+        }
+      }
+
+      document.addEventListener(
+        "click",
+        () => {
+          videoElement.play();
+          loop();
+        },
+        { once: true }
+      );
+
+      if (isLoaded == false) {
+        isLoaded = true;
+        onLoaded();
+      }
+
+      return;
+    }
 
     const camera = new Camera(videoElement, {
       ...size,

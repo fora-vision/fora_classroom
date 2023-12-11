@@ -25,7 +25,10 @@ class Counter {
     }
 
     if (this.cntFrames >= this.forGood && this.nowPose !== null) {
-      const [pose, t] = this.nowPose.split("_");
+      const parts = this.nowPose.split("_");
+      const t = parts.pop();
+      const pose = parts.join("_");
+
       if (this.last.get(pose) !== t) {
         this.last.set(pose, t);
         if (this.worker.config.keyMoment[pose] === t && this.first) return pose;

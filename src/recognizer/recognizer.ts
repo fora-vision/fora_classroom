@@ -2,10 +2,10 @@ import type { PyodideInterface, loadPyodide } from "pyodide";
 import { loadGraphModel } from "@tensorflow/tfjs-converter";
 import * as tf from "@tensorflow/tfjs";
 
+import { predictStats } from "../stats";
 import { WorkoutRoom } from "../WorkoutStore";
 import { SkeletData } from "../types";
 import Counter from "./Counter";
-import stats, { predictStats } from "../stats";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 
