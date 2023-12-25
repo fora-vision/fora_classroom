@@ -84,11 +84,11 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
               )}
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                {store.showReplaceButton && (
+                {/* {store.showReplaceButton && (
                   <S.HintButton onClick={() => store.replaceExercise()} style={{ marginRight: 16 }}>
                     {store.exerciseReplacing ? "Загрузка..." : "Заменить упражнение"}
                   </S.HintButton>
-                )}
+                )} */}
 
                 <S.HintButton onClick={() => setInstructions(true)} style={{ marginRight: 16 }}>
                   Плохо распознает?

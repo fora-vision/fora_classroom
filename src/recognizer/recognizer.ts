@@ -76,7 +76,7 @@ export class RecognizerOndevice {
     if (!this.isStarted) return;
   }
 
-  async sendFrame(points: SkeletData, width: number, height: number) {
+  async sendFrame(points: SkeletData, width: number, height: number, flipped?: boolean) {
     if (!this.workout.current) return false;
     if (!this.isInitialized) return false;
     if (!this.config) return false;
@@ -93,8 +93,19 @@ export class RecognizerOndevice {
     const result = await this.py?.runPythonAsync(perform);
     const id = result.toJs()[0][0];
 
-    predictStats.update(performance.now() - perf, 200);
+    if (id === "None" && !flipped) {
+      const result = await this.sendFrame(
+        points.map((t) => ({ ...t, x: 1 - t.x })),
+        width,
+        height,
+        true
+      );
 
+      predictStats.update(performance.now() - perf, 200);
+      return result;
+    }
+
+    predictStats.update(performance.now() - perf, 200);
     return ex === this.counter.step(id);
   }
 }

@@ -15,6 +15,9 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
   const [isVideo, setVideo] = useState(false);
   const [isInstructions, setInstructions] = useState(false);
 
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+
   const [isLoaded, setLoaded] = useState(false);
   const [fps, setFps] = useState(0);
   const initPerf = useRef(performance.now());
@@ -25,6 +28,14 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
     await store.initialize(jwt);
     initStats.update(performance.now() - initPerf.current);
   };
+
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then((list) => {
+      const videos = list.filter((t) => t.kind === "videoinput");
+      setSelectedDevice(videos[0].deviceId);
+      setDevices(videos);
+    });
+  }, []);
 
   if (mobileCheck()) {
     return (
@@ -40,6 +51,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
   return (
     <div>
       <PoseCamera
+        deviceId={selectedDevice}
         isSavePhotos={store.isSavePhotos}
         style={{ opacity: hideCamera ? 0 : 1 }}
         highlightSkelet={store.highlightSkelet}
@@ -99,6 +111,14 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
               <a href="https://fora.vision">Fora.Vision @2023</a>
             </S.TextTOS>
           </div>
+          <S.Select onChange={(e) => setSelectedDevice(e.target.value)}>
+            {devices.map((t) => (
+              <option key={t.deviceId} value={t.deviceId}>
+                {t.label}
+              </option>
+            ))}
+          </S.Select>
+          ;
         </S.Page>
       )}
 

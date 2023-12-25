@@ -31,7 +31,9 @@ class Counter {
 
       if (this.last.get(pose) !== t) {
         this.last.set(pose, t);
-        if (this.worker.config.keyMoment[pose] === t && this.first) return pose;
+
+        const startPost = this.worker.config.keyMoment[pose] || "down";
+        if (startPost === t && this.first) return pose;
         this.first = true;
       }
     }

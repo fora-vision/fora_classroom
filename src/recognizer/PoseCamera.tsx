@@ -104,17 +104,16 @@ export const PoseCamera: FC<Props> = (props) => {
       canvasElement.height = height;
     };
 
-    let isPreccessing = false;
     async function loop() {
       resizeCanvas();
-      requestAnimationFrame(loop);
 
-      if (videoElement.paused || videoElement.ended) return;
-
-      if (!isPreccessing) {
-        isPreccessing = true;
-        pose.send({ image: videoElement }).finally(() => (isPreccessing = false));
+      if (videoElement.paused || videoElement.ended) {
+        requestAnimationFrame(loop);
+        return;
       }
+
+      await pose.send({ image: videoElement }).catch(() => {});
+      requestAnimationFrame(loop);
     }
 
     loop();
