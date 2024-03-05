@@ -13,7 +13,7 @@ const url = new URLSearchParams(window.location.search);
 const jwt = url.get("w") ?? "";
 const v = url.get("v") ?? "";
 
-const store = v === "1" ? new LegacyWorkoutRoom() : new WorkoutRoom();
-const View: any = v === "1" ? LegacyApp : App;
+// const store = v === "1" ? new LegacyWorkoutRoom() : new WorkoutRoom();
+// const View: any = v === "1" ? LegacyApp : App;
 
-ReactDOM.render(<View store={store} jwt={jwt} />, document.getElementById("root"));
+ReactDOM.render(<LegacyApp store={new LegacyWorkoutRoom()} jwt={jwt} />, document.getElementById("root"));
