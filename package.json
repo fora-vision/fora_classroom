@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "parcel ./index.html",
-    "build": "parcel build ./index.html"
+    "start": "npx parcel ./index.html",
+    "build": "rm -rf .parcel-cache && npx parcel build ./index.html"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "crypto-browserify": "^3.12.0",
     "events": "^3.3.0",
     "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
     "parcel-reporter-static-files-copy": "^1.5.3",
     "path-browserify": "^1.0.1",
     "prettier": "^2.5.1",
@@ -31,6 +32,7 @@
   "dependencies": {
     "@parcel/transformer-webmanifest": "^2.10.3",
     "@tensorflow/tfjs": "^4.13.0",
+    "fast-levenshtein": "^3.0.0",
     "jszip": "^3.10.1",
     "mixpanel-browser": "^2.43.0",
     "mobx": "^6.3.10",

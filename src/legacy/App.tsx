@@ -12,7 +12,6 @@ import Instructions from "../views/Instructions";
 import stats, { initStats } from "../stats";
 
 const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
-  const [isVideo, setVideo] = useState(false);
   const [isInstructions, setInstructions] = useState(false);
 
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -61,7 +60,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
         onFps={setFps}
       />
 
-      {!isVideo && isLoaded && store.exercise && (
+      {!store.showExerciseExample && isLoaded && store.exercise && (
         <S.Page>
           <S.Screen>
             <S.TopAngle>
@@ -69,6 +68,9 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
               <div style={{ display: "flex" }}>
                 <S.Badge style={{ marginRight: 8 }}>{fps} FPS</S.Badge>
                 {store.isSavePhotos && <S.BadgeRec>REC</S.BadgeRec>}
+                <S.Badge style={{ cursor: "pointer", marginRight: 8, zIndex: 100 }} onClick={() => store.toggleAssistant()}>
+                  {store.recognition == null ? "Включить FORA Assistant" : "Отключить FORA Assistant"}
+                </S.Badge>
               </div>
             </S.TopAngle>
 
@@ -91,7 +93,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
                 <S.HintButton onClick={() => setInstructions(true)} style={{ marginRight: 16 }}>
                   Плохо распознает?
                 </S.HintButton>
-                <S.HintButton onClick={() => setVideo(true)}>Показать упражнение</S.HintButton>
+                <S.HintButton onClick={() => store.setShowExerciseExample(true)}>Показать упражнение</S.HintButton>
               </div>
             </S.HelpSide>
           </S.Screen>
@@ -152,7 +154,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
       )}
 
       {isInstructions && (
-        <S.Overlay onClick={() => setVideo(false)} style={{ background: "#000000" }}>
+        <S.Overlay onClick={() => store.setShowExerciseExample(false)} style={{ background: "#000000" }}>
           <Instructions />
           <S.HintButton style={{ position: "absolute", top: 64, bottom: "auto", right: 64 }} onClick={() => setInstructions(false)}>
             Закрыть
@@ -160,10 +162,12 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
         </S.Overlay>
       )}
 
-      {isVideo && (
-        <S.Overlay onClick={() => setVideo(false)}>
+      {store.showExerciseExample && (
+        <S.Overlay onClick={() => store.setShowExerciseExample(false)}>
           <video
             controls
+            loop
+            autoPlay={store.showExerciseExample}
             onClick={(e) => e.stopPropagation()}
             style={{
               borderRadius: 16,
@@ -172,7 +176,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
             }}
             src={store.getExercise()?.video_url}
           />
-          <S.HintButton style={{ position: "absolute", top: 64, bottom: "auto", right: 64 }} onClick={() => setVideo(false)}>
+          <S.HintButton style={{ position: "absolute", top: 64, bottom: "auto", right: 64 }} onClick={() => store.setShowExerciseExample(false)}>
             Закрыть
           </S.HintButton>
         </S.Overlay>

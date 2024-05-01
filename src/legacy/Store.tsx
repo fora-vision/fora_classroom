@@ -1,4 +1,6 @@
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
+import levenshtein from "fast-levenshtein";
+import mapValues from "lodash/mapValues";
 import mixpanel from "mixpanel-browser";
 
 import { WorkoutApi } from "../api";
@@ -43,6 +45,22 @@ const errorMessages = {
   },
 };
 
+const audio = {
+  "cant-replace": new URL("../assets/voice/cant-replace.mp3", import.meta.url),
+  "hide-ex": new URL("../assets/voice/hide-ex.mp3", import.meta.url),
+  okay: new URL("../assets/voice/okay.mp3", import.meta.url),
+  replaced: new URL("../assets/voice/replaced.mp3", import.meta.url),
+  "show-ex": new URL("../assets/voice/show-ex.mp3", import.meta.url),
+};
+
+const speech = mapValues(audio, (url) => {
+  const audio = new Audio();
+  audio.src = url;
+  return audio;
+});
+
+console.log({ speech });
+
 export class WorkoutRoom implements WorkoutWorkerDelegate {
   private worker?: WorkoutWorker;
   private api = new WorkoutApi();
@@ -64,6 +82,9 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   public highlightSkelet = false;
   public totalTime = 0;
 
+  public showExerciseExample = false;
+  public recognition: any = null;
+
   constructor() {
     makeObservable(this, {
       highlightSkelet: observable,
@@ -71,6 +92,12 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       exercise: observable,
       state: observable,
       error: observable,
+
+      recognition: observable,
+      toggleAssistant: action,
+      showExerciseExample: observable,
+      setShowExerciseExample: action,
+      replaceExercise: action,
 
       showReplaceButton: observable,
       exerciseCount: observable,
@@ -91,6 +118,75 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     const soundUrl = new URL("../assets/complete.wav", import.meta.url);
     this.audio.src = soundUrl.toString();
   }
+
+  setShowExerciseExample(is: boolean) {
+    this.showExerciseExample = is;
+  }
+
+  toggleAssistant = () => {
+    if (this.recognition) {
+      this.recognition.stop();
+      this.recognition = null;
+      return;
+    }
+
+    // @ts-ignore
+    this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    this.recognition.interimResults = false;
+    this.recognition.maxAlternatives = 1;
+    this.recognition.continuous = true;
+    this.recognition.lang = "ru";
+
+    this.recognition.onsoundend = (e) => console.log("onsoundend", e);
+    this.recognition.onsoundstart = (e) => console.log("onsoundstart", e);
+    this.recognition.onerror = (e) => {
+      setTimeout(() => this.recognition.start(), 100);
+      this.recognition.stop();
+      console.log(e);
+    };
+
+    this.recognition.onresult = (event) => {
+      const result = event.results[event.resultIndex];
+      const words = result[0].transcript.split(/\s+/);
+
+      const commands = {
+        fora: { word: ["фора", "fora", "папа"], distance: Infinity },
+        replace: { word: ["замени", "меню"], distance: Infinity },
+        show: { word: ["покажи", "открой", "делать"], distance: Infinity },
+        hide: { word: ["закрой", "скрой", "убери"], distance: Infinity },
+      };
+
+      words.forEach((recognized) => {
+        Object.values(commands).forEach((cmd) => {
+          const dst = Math.min(...cmd.word.map((w) => levenshtein.get(recognized, w)));
+          if (dst < cmd.distance) cmd.distance = dst;
+        });
+      });
+
+      console.log(words.join(" "), commands);
+
+      if (commands.fora.distance > 1) return;
+      if (commands.hide.distance < 2) {
+        this.setShowExerciseExample(false);
+        speech["hide-ex"].play();
+      } else if (commands.show.distance < 2) {
+        this.setShowExerciseExample(true);
+        speech["show-ex"].play();
+      }
+
+      if (commands.replace.distance < 2) {
+        if (!this.showReplaceButton) {
+          speech["cant-replace"].play();
+          return;
+        }
+
+        this.replaceExercise();
+        speech["replaced"].play();
+      }
+    };
+
+    this.recognition.start();
+  };
 
   frameId = 0;
   async initialize(jwt: string, fromQR = false) {
