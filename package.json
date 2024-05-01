@@ -11,6 +11,7 @@
   "devDependencies": {
     "@parcel/packager-raw-url": "^2.10.3",
     "@parcel/transformer-inline-string": "^2.10.3",
+    "@parcel/transformer-worklet": "^2.10.3",
     "@types/mixpanel-browser": "^2.38.0",
     "@types/react": "^17.0.38",
     "assert": "^2.1.0",
@@ -45,6 +46,7 @@
     "react-dom": "^17.0.2",
     "react-qr-code": "^2.0.3",
     "stats.js": "^0.17.0",
-    "styled-components": "^5.3.3"
+    "styled-components": "^5.3.3",
+    "vosk-browser": "^0.0.8"
   }
 }

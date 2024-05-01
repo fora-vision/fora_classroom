@@ -69,7 +69,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
                 <S.Badge style={{ marginRight: 8 }}>{fps} FPS</S.Badge>
                 {store.isSavePhotos && <S.BadgeRec>REC</S.BadgeRec>}
                 <S.Badge style={{ cursor: "pointer", marginRight: 8, zIndex: 100 }} onClick={() => store.toggleAssistant()}>
-                  {store.recognition == null ? "Включить FORA Assistant" : "Отключить FORA Assistant"}
+                  {store.assistantLoading ? "FORA Ассистент загружается" : store.assistantEnabled ? "Отключить FORA Ассистент" : "Включить FORA Ассистент"}
                 </S.Badge>
               </div>
             </S.TopAngle>

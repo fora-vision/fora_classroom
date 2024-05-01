@@ -2,11 +2,21 @@ import { action, computed, makeObservable, observable, runInAction } from "mobx"
 import levenshtein from "fast-levenshtein";
 import mapValues from "lodash/mapValues";
 import mixpanel from "mixpanel-browser";
+import cloneDeep from "lodash/cloneDeep";
 
 import { WorkoutApi } from "../api";
 import { Exercise, SkeletData, WorkoutModel } from "../types";
 import { WorkoutDisconnectStatus, WorkoutWorker, WorkoutWorkerDelegate } from "./Worker";
 import { framesStats } from "../stats";
+import initVoiceAssitant from "./voice";
+
+// @ts-ignore
+window.foraCommands = {
+  fora: { word: ["фора", "fora", "папа"], threshold: 2, distance: Infinity },
+  replace: { word: ["замени", "поменять", "поменяй", "меню"], threshold: 2, distance: Infinity },
+  show: { word: ["покажи", "открой", "делать"], threshold: 2, distance: Infinity },
+  hide: { word: ["закрой", "скрой", "убери"], threshold: 2, distance: Infinity },
+};
 
 export enum WorkoutState {
   Invite,
@@ -83,7 +93,9 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
   public totalTime = 0;
 
   public showExerciseExample = false;
-  public recognition: any = null;
+  public assistantLoading = false;
+  public assistantEnabled = false;
+  public assistantLoaded = false;
 
   constructor() {
     makeObservable(this, {
@@ -93,7 +105,10 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       state: observable,
       error: observable,
 
-      recognition: observable,
+      assistantLoading: observable,
+      assistantEnabled: observable,
+      assistantLoaded: observable,
+
       toggleAssistant: action,
       showExerciseExample: observable,
       setShowExerciseExample: action,
@@ -123,70 +138,57 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
     this.showExerciseExample = is;
   }
 
-  toggleAssistant = () => {
-    if (this.recognition) {
-      this.recognition.stop();
-      this.recognition = null;
+  async toggleAssistant() {
+    if (this.assistantLoading) return;
+
+    if (this.assistantLoaded) {
+      this.assistantEnabled = !this.assistantEnabled;
       return;
     }
 
-    // @ts-ignore
-    this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    this.recognition.interimResults = false;
-    this.recognition.maxAlternatives = 1;
-    this.recognition.continuous = true;
-    this.recognition.lang = "ru";
+    this.assistantLoading = true;
+    const recognizer = await initVoiceAssitant();
+    runInAction(() => {
+      this.assistantLoading = false;
+      this.assistantLoaded = true;
+      this.assistantEnabled = true;
+    });
 
-    this.recognition.onsoundend = (e) => console.log("onsoundend", e);
-    this.recognition.onsoundstart = (e) => console.log("onsoundstart", e);
-    this.recognition.onerror = (e) => {
-      setTimeout(() => this.recognition.start(), 100);
-      this.recognition.stop();
-      console.log(e);
-    };
+    recognizer.on("result", ({ result }) => {
+      const words = result?.result?.map?.((t) => t.word);
+      if (!words) return;
 
-    this.recognition.onresult = (event) => {
-      const result = event.results[event.resultIndex];
-      const words = result[0].transcript.split(/\s+/);
-
-      const commands = {
-        fora: { word: ["фора", "fora", "папа"], distance: Infinity },
-        replace: { word: ["замени", "меню"], distance: Infinity },
-        show: { word: ["покажи", "открой", "делать"], distance: Infinity },
-        hide: { word: ["закрой", "скрой", "убери"], distance: Infinity },
-      };
-
+      // @ts-ignore
+      const commands: any = cloneDeep(window.foraCommands);
       words.forEach((recognized) => {
-        Object.values(commands).forEach((cmd) => {
+        Object.values(commands).forEach((cmd: any) => {
           const dst = Math.min(...cmd.word.map((w) => levenshtein.get(recognized, w)));
           if (dst < cmd.distance) cmd.distance = dst;
         });
       });
 
-      console.log(words.join(" "), commands);
-
-      if (commands.fora.distance > 1) return;
-      if (commands.hide.distance < 2) {
-        this.setShowExerciseExample(false);
-        speech["hide-ex"].play();
-      } else if (commands.show.distance < 2) {
-        this.setShowExerciseExample(true);
-        speech["show-ex"].play();
-      }
-
-      if (commands.replace.distance < 2) {
-        if (!this.showReplaceButton) {
-          speech["cant-replace"].play();
-          return;
+      console.log("RESULT", words.join(" "), commands);
+      if (commands.fora.distance < commands.fora.threshold) {
+        if (commands.hide.distance < commands.hide.threshold) {
+          this.setShowExerciseExample(false);
+          speech["hide-ex"].play();
+        } else if (commands.show.distance < commands.show.threshold) {
+          this.setShowExerciseExample(true);
+          speech["show-ex"].play();
         }
 
-        this.replaceExercise();
-        speech["replaced"].play();
-      }
-    };
+        if (commands.replace.distance < commands.replace.threshold) {
+          if (!this.showReplaceButton) {
+            speech["cant-replace"].play();
+            return;
+          }
 
-    this.recognition.start();
-  };
+          this.replaceExercise();
+          speech["replaced"].play();
+        }
+      }
+    });
+  }
 
   frameId = 0;
   async initialize(jwt: string, fromQR = false) {

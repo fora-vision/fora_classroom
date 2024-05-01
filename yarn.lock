@@ -1687,6 +1687,13 @@
     "@parcel/plugin" "2.10.3"
     "@parcel/utils" "2.10.3"
 
+"@parcel/transformer-worklet@^2.10.3":
+  version "2.10.3"
+  resolved "https://registry.npmjs.org/@parcel/transformer-worklet/-/transformer-worklet-2.10.3.tgz"
+  integrity sha512-AF1YC0elA6RFcLnLyUf+OXu8njQ9SoPK9iCEyS0sdOPNEMuu/2hqrDaNXXaKjzPZYs46zT+0BkBmqU0HLGPSRA==
+  dependencies:
+    "@parcel/plugin" "2.10.3"
+
 "@parcel/types@2.10.3":
   version "2.10.3"
   resolved "https://registry.npmjs.org/@parcel/types/-/types-2.10.3.tgz"
@@ -6904,6 +6911,11 @@ uuid@^3.3.2:
   resolved "https://registry.npmjs.org/uuid/-/uuid-3.4.0.tgz"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
 
+uuid@9.0.0:
+  version "9.0.0"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-9.0.0.tgz"
+  integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
+
 vary@~1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz"
@@ -6913,6 +6925,13 @@ vlq@^1.0.0:
   version "1.0.1"
   resolved "https://registry.npmjs.org/vlq/-/vlq-1.0.1.tgz"
   integrity sha512-gQpnTgkubC6hQgdIcRdYGDSDc+SaujOdyesZQMv6JlfQee/9Mp0Qhnys6WxDWvQnL5WZdT7o2Ul187aSt0Rq+w==
+
+vosk-browser@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.npmjs.org/vosk-browser/-/vosk-browser-0.0.8.tgz"
+  integrity sha512-df9MuChirUGKxP/+4k8tBV6hJOic8IRdJXv64+ET0Ue5CddOzLZINiHOWCka765gBzHJWNtQKgaYakS0FXZIJA==
+  dependencies:
+    uuid "9.0.0"
 
 walker@^1.0.7, walker@~1.0.5:
   version "1.0.8"
