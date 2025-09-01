@@ -105,7 +105,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
             <S.TextTOS>
-              Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://fora.vision/tos">условиями пользования</a>
+              Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://www.fora.vision/tos">условиями пользования</a>
             </S.TextTOS>
 
             <S.TextTOS onClick={() => (stats.dom.hidden = false)} style={{ fontWeight: "bold", marginLeft: "auto", cursor: "pointer" }}>
@@ -114,7 +114,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
 
             <S.TextTOS style={{ fontWeight: "bold" }}>Engine {store.workout?.model_version ?? ""}</S.TextTOS>
             <S.TextTOS style={{ fontWeight: "bold" }}>
-              <a href="https://fora.vision">Fora.Vision @2023</a>
+              <a href="https://www.fora.vision">Fora.Vision @2023</a>
             </S.TextTOS>
           </div>
 

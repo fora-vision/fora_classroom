@@ -103,14 +103,14 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
           </S.Timeline>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
             <S.TextTOS>
-              Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://fora.vision/tos">условиями пользования</a>
+              Занимаясь тренировками на этом сайте, вы соглашаетесь с <a href="https://www.fora.vision/tos">условиями пользования</a>
             </S.TextTOS>
 
             <S.TextTOS onClick={() => (stats.dom.hidden = false)} style={{ fontWeight: "bold", marginLeft: "auto", cursor: "pointer" }}>
               Metrics
             </S.TextTOS>
             <S.TextTOS style={{ fontWeight: "bold" }}>
-              <a href="https://fora.vision">Fora.Vision @2023</a>
+              <a href="https://www.fora.vision">Fora.Vision @2023</a>
             </S.TextTOS>
           </div>
           <S.Select onChange={(e) => setSelectedDevice(e.target.value)}>
