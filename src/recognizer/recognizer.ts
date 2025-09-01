@@ -5,7 +5,7 @@ import * as tf from "@tensorflow/tfjs";
 import { predictStats } from "../stats";
 import { WorkoutRoom } from "../WorkoutStore";
 import { SkeletData } from "../types";
-import Counter from "./Counter";
+import Counter from "./counter";
 
 type Model = tf.GraphModel<string | tf.io.IOHandler>;
 

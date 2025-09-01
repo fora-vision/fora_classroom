@@ -1,5 +1,5 @@
 import { loadStats, predictStats, uploadStats } from "../stats";
-import { SkeletData, RoomResponse, Exercise } from "../types";
+import { SkeletData } from "../types";
 
 export enum WorkoutDisconnectStatus {
   AlreadyCompleted = 3002,

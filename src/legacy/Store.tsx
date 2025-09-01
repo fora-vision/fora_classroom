@@ -12,7 +12,6 @@ import initVoiceAssitant from "./voice";
 
 // @ts-ignore
 window.foraCommands = {
-  fora: { word: ["фора", "fora", "папа"], threshold: 2, distance: Infinity },
   replace: { word: ["замени", "поменять", "поменяй", "меню"], threshold: 2, distance: Infinity },
   show: { word: ["покажи", "открой", "делать"], threshold: 2, distance: Infinity },
   hide: { word: ["закрой", "скрой", "убери"], threshold: 2, distance: Infinity },
@@ -168,24 +167,22 @@ export class WorkoutRoom implements WorkoutWorkerDelegate {
       });
 
       console.log("RESULT", words.join(" "), commands);
-      if (commands.fora.distance < commands.fora.threshold) {
-        if (commands.hide.distance < commands.hide.threshold) {
-          this.setShowExerciseExample(false);
-          speech["hide-ex"].play();
-        } else if (commands.show.distance < commands.show.threshold) {
-          this.setShowExerciseExample(true);
-          speech["show-ex"].play();
+      if (commands.hide.distance < commands.hide.threshold) {
+        this.setShowExerciseExample(false);
+        speech["hide-ex"].play();
+      } else if (commands.show.distance < commands.show.threshold) {
+        this.setShowExerciseExample(true);
+        speech["show-ex"].play();
+      }
+
+      if (commands.replace.distance < commands.replace.threshold) {
+        if (!this.showReplaceButton) {
+          speech["cant-replace"].play();
+          return;
         }
 
-        if (commands.replace.distance < commands.replace.threshold) {
-          if (!this.showReplaceButton) {
-            speech["cant-replace"].play();
-            return;
-          }
-
-          this.replaceExercise();
-          speech["replaced"].play();
-        }
+        this.replaceExercise();
+        speech["replaced"].play();
       }
     });
   }
