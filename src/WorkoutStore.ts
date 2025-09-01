@@ -88,7 +88,7 @@ export class WorkoutRoom {
         this.state = WorkoutState.Error;
         this.error = {
           title: "Тренировка заблокирована",
-          description: "Наша система заподозрила нечестное выполнение тренировки, если это ошибка, пожалуйста, напишите нам на help@fora.vision",
+          description: "Наша система заподозрила нечестное выполнение тренировки, если это ошибка, пожалуйста, напишите нам на aborisova@fora.vision",
         };
         return;
       }

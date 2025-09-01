@@ -40,7 +40,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
     return (
       <S.MobileAccess>
         <img src={logoSrc} />
-        <h1>Fora.Vision</h1>
+        <h1>FORA VISION</h1>
         <br />
         <p>Откройте нас через компьютер, чтобы начать тренировку!</p>
       </S.MobileAccess>
@@ -110,7 +110,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
               Metrics
             </S.TextTOS>
             <S.TextTOS style={{ fontWeight: "bold" }}>
-              <a href="https://www.fora.vision">Fora.Vision @2023</a>
+              <a href="https://www.fora.vision">FORA VISION @2025</a>
             </S.TextTOS>
           </div>
           <S.Select onChange={(e) => setSelectedDevice(e.target.value)}>
@@ -147,7 +147,7 @@ const App = observer(({ store, jwt }: { store: WorkoutRoom; jwt: string }) => {
       {store.state === WorkoutState.Invite && (
         <S.MobileAccess style={{ background: "#000" }}>
           <img src={logoSrc} />
-          <h1>Fora.Vision</h1>
+          <h1>FORA VISION</h1>
           <br />
           <p>Откройте нас в Telegram боте, чтобы выбрать тренировку!</p>
         </S.MobileAccess>
