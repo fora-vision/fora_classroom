@@ -3,7 +3,7 @@ import mixpanel from "mixpanel-browser";
 import crypto from "crypto";
 
 import { Exercise, SkeletData, WorkoutBatch, WorkoutModel, WorkoutState, WorkoutStatus, initializeError } from "./types";
-import { RecognizerOndevice } from "./recognizer/Recognizer";
+import { RecognizerOndevice } from "./recognizer/recognizer";
 import { framesStats, uploadStats } from "./stats";
 import { AutoQueue, wait } from "./helpers";
 import { WorkoutApi } from "./api";
