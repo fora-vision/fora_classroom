@@ -22,7 +22,10 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build project
-        run: yarn build
+        run: yarn build --no-warnings
+        env:
+          ESLINT_NO_DEV_ERRORS: true
+          NODE_ENV: production
 
       - name: Create zip archive
         run: |
