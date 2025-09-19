@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
 
 // @ts-ignore
-import logoSrc from "../assets/logo.png";
+import logoSrc from "../assets/logo.jpg";
 import { PoseCamera } from "../recognizer/PoseCamera";
 import { WorkoutRoom, WorkoutState } from "./Store";
 import { formatTime, mobileCheck } from "../helpers";

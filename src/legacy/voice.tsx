@@ -1,11 +1,11 @@
 // @ts-ignore
-import workletUrl from "worklet:./recognizer-processor.js";
+import workletUrl from "worklet:./recognizer-processor.js"; // @ts-ignore
 
 async function initVoiceAssitant() {
   const channel = new MessageChannel();
 
   // @ts-ignore
-  const model = await Vosk.createModel("https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-ru-0.4.tar.gz");
+  const model = await Vosk.createModel(new URL("./vosk-model-small-ru-0.4.tar.gz", import.meta.url).href);
   model.registerPort(channel.port1);
 
   const sampleRate = 48000;

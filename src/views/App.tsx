@@ -7,7 +7,7 @@ import { WorkoutRoom } from "../WorkoutStore";
 import { WorkoutState } from "../types";
 
 // @ts-ignore
-import logoSrc from "../assets/logo.png";
+import logoSrc from "../assets/logo.jpg";
 import Instructions from "./Instructions";
 import ExerciseHint from "./ExerciseHint";
 import stats, { initStats } from "../stats";
